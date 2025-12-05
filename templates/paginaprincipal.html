@@ -33,6 +33,7 @@
       </div>
 
       <div class="header-actions">
+        <!-- Carrito → demo 500 -->
         <a
           href="{% url 'demo_500' %}"
           class="cart-btn"
@@ -42,21 +43,30 @@
           🛒
           <span id="cartCount" class="cart-count">0</span>
         </a>
-        
-        <!-- 🔥 Aquí está el botón que cambia si hay un usuario logueado -->
+      
         {% if request.session.usuario_id %}
           <span class="user-greeting">
             Hola, {{ request.session.usuario_nombre }}
           </span>
-          <a href="{% url 'logout' %}" class="btn-outline">Cerrar sesión</a>
+      
+          <!-- Nuevo: enlace a perfil -->
+          <a href="{% url 'perfil' %}" class="btn-outline">
+            Mi perfil
+          </a>
+      
+          <a href="{% url 'logout' %}" class="btn-outline">
+            Cerrar sesión
+          </a>
         {% else %}
-          <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">Ingresar</a>
+          <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">
+            Ingresar
+          </a>
         {% endif %}
-        
+      
+        <!-- Botón Vender → demo 404 -->
         <a href="{% url 'demo_404' %}" class="btn-primary" title="Simular error 404">
           Vender
         </a>
-        
       </div>
     </header>
 
