@@ -9,8 +9,8 @@ const productos = [
     vendedor: "ToolPro La Tusa",
     rating: 4.7,
     ventas: 825,
-    precio: 300.000,
-    imagen: "../taladro.png",
+    precio: 300,
+    imagen: "static/img/taladro.png",
 
     descripcion:
       "Taladro potente con batería de litio, 2 velocidades y luz LED integrada. Incluye maletín y cargador rápido.",
@@ -30,8 +30,8 @@ const productos = [
     vendedor: "Ferretería El Ingeniero",
     rating: 4.5,
     ventas: 410,
-    precio: 754.099,
-    imagen: "../sierra.png",
+    precio: 754,
+    imagen: "static/img/sierra.png",
     descripcion:
       "Sierra circular de alto rendimiento para cortes rectos en madera y tableros. Incluye guía paralela.",
     caracteristicas: [
@@ -53,8 +53,8 @@ const productos = [
     vendedor: "Ferretería El Ingeniero",
     rating: 4.6,
     ventas: 523,
-    precio: 150.000,
-    imagen: "../martillos.png",
+    precio: 150,
+    imagen: "static/img/martillos.png",
     descripcion:
       "Set de 3 martillos con cabezas forjadas y mangos ergonómicos antideslizantes.",
     caracteristicas: [
@@ -72,8 +72,8 @@ const productos = [
     vendedor: "Efraín Herramientas",
     rating: 4.8,
     ventas: 412,
-    precio: 24.500,
-    imagen: "../otromartillo.png",
+    precio: 24,
+    imagen: "static/img/otromartillo.png",
     descripcion:
       "Martillo tradicional con mango de fibra de vidrio y cabeza forjada.",
     caracteristicas: [
@@ -95,8 +95,8 @@ const productos = [
     vendedor: "Pinturas El Color",
     rating: 4.3,
     ventas: 310,
-    precio: 75.40000,
-    imagen: "../rodillo.png",
+    precio: 75,
+    imagen: "static/img/rodillo.png",
     descripcion:
       "Kit básico de pintura con rodillo de microfibra y bandeja resistente.",
     caracteristicas: ["Rodillo lavable", "Bandeja reforzada", "Ligero"],
@@ -109,8 +109,8 @@ const productos = [
     vendedor: "Pinceles Premium",
     rating: 4.9,
     ventas: 189,
-    precio: 54.700,
-    imagen: "../pinceles.png",
+    precio: 54,
+    imagen: "static/img/pinceles.png",
     descripcion:
       "Conjunto de brochas de alta calidad con cerdas suaves.",
     caracteristicas: [
@@ -131,8 +131,8 @@ const productos = [
     vendedor: "Altura Segura",
     rating: 4.6,
     ventas: 142,
-    precio: 500.000,
-    imagen: "../escalera.png",
+    precio: 500,
+    imagen: "static/img/escalera.png",
     descripcion:
       "Escalera liviana y resistente, perfecta para uso doméstico y profesional.",
     caracteristicas: [
@@ -153,8 +153,8 @@ const productos = [
     vendedor: "Meditec",
     rating: 4.5,
     ventas: 390,
-    precio: 30.200,
-    imagen: "../metro.png",
+    precio: 300,
+    imagen: "static/img/metro.png",
     descripcion:
       "Cinta métrica reforzada con sistema de freno y clip metálico.",
     caracteristicas: [
@@ -171,8 +171,8 @@ const productos = [
     vendedor: "ProNivel",
     rating: 4.7,
     ventas: 95,
-    precio: 250.000,
-    imagen: "../laser.png",
+    precio: 250,
+    imagen: "static/img/laser.png",
     descripcion:
       "Nivel láser con proyección horizontal y vertical para alta precisión.",
     caracteristicas: [
@@ -228,7 +228,7 @@ function renderProducts(categoria = "Todos") {
             ${prod.descripcion.slice(0, 90)}${prod.descripcion.length > 90 ? "..." : ""}
           </p>
 
-          <div class="product-price">$${prod.precio.toFixed(2)}</div>
+          <div class="product-price">$${prod.precio.toFixed(3)}</div>
 
           <button class="product-details-btn" data-id="${prod.id}">
             Ver detalles
@@ -288,7 +288,7 @@ function openModal(id) {
   modalTag.textContent = p.categoria;
   modalTitle.textContent = p.titulo;
   modalMeta.textContent = `${p.vendedor} • ★ ${p.rating} • ${p.ventas} ventas`;
-  modalPrice.textContent = `$${p.precio.toFixed(2)}`;
+  modalPrice.textContent = `$${p.precio.toFixed(3)}`;
   modalDesc.textContent = p.descripcion;
   modalStock.textContent = p.stock;
 
