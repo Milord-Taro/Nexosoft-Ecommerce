@@ -37,10 +37,17 @@
           🛒
           <span id="cartCount" class="cart-count">0</span>
         </button>
-
+        
         <!-- 🔥 Aquí está el botón que cambia si hay un usuario logueado -->
-        <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">Ingresar</a>
-
+        {% if request.session.usuario_id %}
+          <span class="user-greeting">
+            Hola, {{ request.session.usuario_nombre }}
+          </span>
+          <a href="{% url 'logout' %}" class="btn-outline">Cerrar sesión</a>
+        {% else %}
+          <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">Ingresar</a>
+        {% endif %}
+        
         <a href="500.html" class="btn-primary">Vender</a>
       </div>
     </header>

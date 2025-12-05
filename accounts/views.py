@@ -34,10 +34,16 @@ def login_view(request):
         request.session["usuario_nombre"] = usuario["nombres"]
         request.session["usuario_rol"] = str(usuario["idRol"])
 
-        messages.success(request, f"Bienvenido, {usuario['nombres']} 👋")
         return redirect("landing")
 
     return render(request, "login.html")
+
+def logout_view(request):
+    # Elimina toda la sesión del usuario
+    request.session.flush()
+    messages.info(request, "Has cerrado sesión correctamente.")
+    return redirect("landing")
+
 
 def register_view(request):
     if request.method == "POST":

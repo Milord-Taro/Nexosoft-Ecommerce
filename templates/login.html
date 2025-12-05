@@ -12,7 +12,6 @@
 
   <!-- CSS del login -->
   <link rel="stylesheet" href="{% static 'css/login.css' %}">
-
 </head>
 
 <body>
@@ -32,8 +31,20 @@
 
     <!-- LOGIN -->
     <main>
+      <!-- BANNER DE MENSAJES -->
+      {% if messages %}
+      <div class="auth-messages">
+        {% for message in messages %}
+          <div class="auth-message {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <section class="auth-wrapper">
         <article class="auth-card">
+
           <div class="auth-header">
             <h1 class="auth-title">Iniciar sesión</h1>
             <p class="auth-subtitle">
@@ -41,16 +52,6 @@
             </p>
           </div>
 
-          {% if messages %}
-            <div class="auth-messages">
-              {% for message in messages %}
-                <div class="auth-message {{ message.tags }}">
-                  {{ message }}
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-          
           <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
 
@@ -66,7 +67,7 @@
                   required
                 />
               </div>
-            
+
               <div class="form-group">
                 <label for="loginPassword">Contraseña</label>
                 <input
@@ -79,18 +80,19 @@
                 />
               </div>
             </div>
-            
+
             <div class="auth-footer">
               <span class="auth-footer-text">
                 ¿Aún no tienes cuenta?
                 <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>
               </span>
-            
+
               <button class="btn-primary" type="submit">
                 Iniciar sesión
               </button>
             </div>
           </form>
+
         </article>
       </section>
     </main>
@@ -105,11 +107,5 @@
       </div>
     </footer>
   </div>
-
-  
-  </div>
-
-
-
 </body>
 </html>

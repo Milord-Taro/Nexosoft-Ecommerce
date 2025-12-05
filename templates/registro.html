@@ -10,14 +10,14 @@
   <!-- Fuente Montserrat -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- css/login.css -->
+  <!-- Usamos el mismo CSS que el login -->
   <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
 
 <body>
   <div class="app-wrapper">
 
-    <!-- HEADER (igual que antes) -->
+    <!-- HEADER -->
     <header class="main-header">
       <div class="brand">
         <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
@@ -30,28 +30,33 @@
     </header>
 
     <main>
+      <!-- BANNER DE MENSAJES -->
+      {% if messages %}
+      <div class="auth-messages">
+        {% for message in messages %}
+          <div class="auth-message {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- CARD DE REGISTRO -->
       <section class="auth-wrapper">
         <article class="auth-card">
+
           <div class="auth-header">
-            {% if messages %}
-              <div class="auth-messages">
-                {% for message in messages %}
-                  <div class="auth-message {{ message.tags }}">
-                    {{ message }}
-                  </div>
-                {% endfor %}
-              </div>
-            {% endif %}
             <h1 class="auth-title">Crear cuenta</h1>
-            <p class="auth-subtitle">Regístrate para comprar en Nexosoft.</p>
+            <p class="auth-subtitle">
+              Regístrate para comprar en Nexosoft.
+            </p>
           </div>
 
-          <!-- FORMULARIO COMPLETO -->
-          <form id="regForm" method="post" action="{% url 'registro' %}" novalidate>
+          <form method="post" action="{% url 'registro' %}">
             {% csrf_token %}
-            <div class="auth-body">
 
-              <!-- NOMBRE -->
+            <div class="auth-body auth-body-grid">
+              <!-- NOMBRES -->
               <div class="form-group">
                 <label for="regName">Nombres</label>
                 <input
@@ -64,25 +69,25 @@
                   minlength="2"
                   maxlength="60"
                   pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
-                  title="Solo se permiten letras y espacios, entre 2 y 60 caracteres."
+                  title="El nombre debe contener solo letras y tener entre 2 y 60 caracteres."
                 />
               </div>
 
-              <!-- APELLIDO -->
+              <!-- APELLIDOS -->
               <div class="form-group">
                 <label for="regLast">Apellidos</label>
-                 <input
-                    id="regLast"
-                    name="apellidos"
-                    type="text"
-                    class="form-input"
-                    placeholder="Ej: Ramírez Torres"
-                    required
-                    minlength="2"
-                    maxlength="60"
-                    pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
-                    title="Solo se permiten letras y espacios, entre 2 y 60 caracteres."
-                  />
+                <input
+                  id="regLast"
+                  name="apellidos"
+                  type="text"
+                  class="form-input"
+                  placeholder="Ej: Ramírez Torres"
+                  required
+                  minlength="2"
+                  maxlength="60"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="El apellido debe contener solo letras y tener entre 2 y 60 caracteres."
+                />
               </div>
 
               <!-- CORREO -->
@@ -97,7 +102,7 @@
                   required
                   maxlength="60"
                   pattern="^[^@\s]+@(gmail\.com|hotmail\.com|outlook\.com|yahoo\.com)$"
-                  title="Solo se permiten correos con dominios: gmail.com, hotmail.com, outlook.com o yahoo.com"
+                  title="Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo."
                 />
               </div>
 
@@ -109,91 +114,94 @@
                   name="telefono"
                   type="tel"
                   class="form-input"
-                  placeholder="Ej: 3157894421"
+                  placeholder="3157894421"
                   required
                   minlength="10"
                   maxlength="10"
                   pattern="^3[0-9]{9}$"
-                  title="Debe ser un celular colombiano de 10 dígitos que comienza en 3."
+                  title="Debe ser un celular colombiano de 10 dígitos y comenzar en 3."
                 />
               </div>
 
-              <!-- TIPO DOCUMENTO -->
+              <!-- TIPO IDENTIFICACIÓN -->
               <div class="form-group">
                 <label for="regTipoId">Tipo de identificación</label>
-                  <select
-                    id="regTipoId"
-                    name="tipoIdentificacion"
-                    class="form-input"
-                    required
-                  >
-                    <option value="">Selecciona una opción</option>
-                    <option value="CC">Cédula de ciudadanía</option>
-                    <option value="CE">Cédula de extranjería</option>
-                    <option value="NIT">NIT</option>
-                    <option value="PASAPORTE">Pasaporte</option>
-                    <option value="OTRO">Otro</option>
-                  </select>
+                <select
+                  id="regTipoId"
+                  name="tipoIdentificacion"
+                  class="form-input"
+                  required
+                >
+                  <option value="">Selecciona una opción</option>
+                  <option value="CC">Cédula de ciudadanía (CC)</option>
+                  <option value="CE">Cédula de extranjería (CE)</option>
+                  <option value="NIT">NIT</option>
+                  <option value="PASAPORTE">Pasaporte</option>
+                  <option value="OTRO">Otro</option>
+                </select>
               </div>
 
-
-              <!-- NUMERO DOCUMENTO -->
+              <!-- NÚMERO IDENTIFICACIÓN -->
               <div class="form-group">
                 <label for="regDoc">Documento de identidad</label>
-                <input 
-                  id="regDoc" 
-                  name="numeroIdentificacion" 
-                  type="text" 
-                  class="form-input" 
-                  placeholder="Ej: 1234567890" 
+                <input
+                  id="regDoc"
+                  name="numeroIdentificacion"
+                  type="text"
+                  class="form-input"
+                  placeholder="Ej: 1023456789"
                   required
                   minlength="5"
                   maxlength="15"
-                  pattern="[0-9]{5,15}"
-                  title="Debe contener solo dígitos, entre 5 y 15 caracteres."
+                  pattern="^[0-9]{5,15}$"
+                  title="El documento debe tener entre 5 y 15 dígitos numéricos."
                 />
               </div>
 
               <!-- CONTRASEÑA -->
               <div class="form-group">
-                <label for="regPass">Contraseña</label>
-                <input
-                  id="regPass"
-                  name="password"
-                  type="password"
-                  class="form-input"
-                  placeholder="••••••••"
-                  required
-                  minlength="6"
-                  maxlength="16"
-                  pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,16}"
-                  title="Debe tener entre 6 y 16 caracteres, con al menos una letra y un número."
-                />
+                <label for="regPass1">Contraseña</label>
+                <div class="password-wrapper">
+                  <input
+                    id="regPass1"
+                    name="password"
+                    type="password"
+                    class="form-input"
+                    placeholder="••••••••"
+                    required
+                    minlength="6"
+                    maxlength="16"
+                    pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,16}"
+                    title="Debe tener entre 6 y 16 caracteres, con letras y números."
+                  />
+                  <span class="toggle-password" data-target="regPass1">👁</span>
+                </div>
               </div>
 
               <!-- CONFIRMAR CONTRASEÑA -->
               <div class="form-group">
                 <label for="regPass2">Confirmar contraseña</label>
-                <input
-                   id="regPass2"
-                   name="password2"
-                   type="password"
-                   class="form-input"
-                   placeholder="Repite tu contraseña"
-                   required
-                   minlength="6"
-                   maxlength="16"
-                />
+                <div class="password-wrapper">
+                  <input
+                    id="regPass2"
+                    name="password2"
+                    type="password"
+                    class="form-input"
+                    placeholder="Repite tu contraseña"
+                    required
+                  />
+                 <span class="toggle-password" data-target="regPass2">👁</span>
+                </div>
               </div>
-
             </div>
 
-            <!-- FOOTER -->
             <div class="auth-footer">
-              <span>¿Ya tienes cuenta?</span>
+              <span class="auth-footer-text">
+                ¿Ya tienes cuenta?
+                <a href="{% url 'login' %}" class="link-inline">Inicia sesión aquí</a>
+              </span>
 
-              <!-- BOTÓN FUNCIONAL -->
-              <button type="submit" class="btn-primary">Crear</button>
+              <button type="submit" class="btn-primary">Crear cuenta</button>
             </div>
           </form>
 
@@ -201,30 +209,49 @@
       </section>
     </main>
 
+    <footer class="site-footer">
+      <div class="footer-bottom">
+        <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+        <span class="footer-made-with">
+          Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+        </span>
+      </div>
+    </footer>
   </div>
 
-  <!-- VALIDACIONES JAVASCRIPT -->
+  <!-- // Validación de coincidencia de contraseñas en tiempo real -->
   <script>
-    const form = document.getElementById("regForm");
-    const pass = document.getElementById("regPass");
+    const form = document.querySelector("form");
+    const pass1 = document.getElementById("regPass1");
     const pass2 = document.getElementById("regPass2");
-
-    form.addEventListener("submit", function (e) {
-
-      // Validación de contraseñas iguales
-      if (pass.value !== pass2.value) {
-        pass2.setCustomValidity("Las contraseñas no coinciden");
+    
+    function validarPasswords() {
+      if (pass1.value !== pass2.value) {
+        pass2.setCustomValidity("Las contraseñas no coinciden.");
       } else {
         pass2.setCustomValidity("");
       }
-
-      // Si hay error, impedir envío y mostrar mensajes
+    }
+    
+    pass1.addEventListener("input", validarPasswords);
+    pass2.addEventListener("input", validarPasswords);
+    
+    form.addEventListener("submit", function(event) {
+      validarPasswords();
       if (!form.checkValidity()) {
-        e.preventDefault();
-        form.reportValidity(); // <-- MUESTRA LOS ERRORES SOLO AL OPRIMIR "CREAR"
+        event.preventDefault();
+        form.reportValidity();
       }
     });
-  </script>
 
+    // Mostrar/ocultar contraseñas
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+        input.type = input.type === "password" ? "text" : "password";
+      });
+    });
+    
+    </script>
 </body>
 </html>

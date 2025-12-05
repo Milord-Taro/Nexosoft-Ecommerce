@@ -115,8 +115,10 @@ body {
 main {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding: 12px 0 24px;  /* menos espacio arriba */
 }
 
 .auth-wrapper {
@@ -251,25 +253,53 @@ label {
   }
 }
 
+/* BANNER DE MENSAJES (login / registro) */
 .auth-messages {
-  margin: 10px 22px 0;
+  width: 100%;
+  display: flex;
+  justify-content: center; /* centra el bloque */
+  margin-bottom: 12px;
 }
 
 .auth-message {
-  font-size: 0.8rem;
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  width: 100%;
+  max-width: 460px;         /* mismo ancho aproximado que la tarjeta */
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-top: 8px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
+/* colores según tipo de mensaje */
 .auth-message.error {
   background: #fee2e2;
   color: #b91c1c;
   border: 1px solid #fecaca;
 }
 
-.auth-message.success {
+.auth-message.success,
+.auth-message.info {
   background: #dcfce7;
   color: #166534;
   border: 1px solid #bbf7d0;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  opacity: 0.7;
+}
+.toggle-password:hover {
+  opacity: 1;
 }
