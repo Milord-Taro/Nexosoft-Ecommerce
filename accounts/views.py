@@ -52,7 +52,7 @@ def register_view(request):
         apellidos = request.POST.get("apellidos", "").strip()
         tipo_ident = request.POST.get("tipoIdentificacion", "").strip()
         num_ident = request.POST.get("numeroIdentificacion", "").strip()
-        correo = request.POST.get("correoElectronico", "").strip()
+        correo = request.POST.get("correoElectronico", "").strip().lower()  # 👈 normalizamos a minúsculas
         telefono = request.POST.get("telefono", "").strip()
         password = request.POST.get("password", "")
         password2 = request.POST.get("password2", "")
@@ -70,7 +70,12 @@ def register_view(request):
 
         # ── 3. Verificar si ya existe usuario con ese correo ──
         if mongo_service.buscar_usuario_por_correo(correo):
-            messages.error(request, "Ya existe un usuario registrado con ese correo.")
+            messages.error(request, "Ya existe un usuario registrado con ese correo electrónico.")
+            return render(request, "registro.html")
+
+        # ── 3.1 Verificar si ya existe usuario con ese documento ──
+        if mongo_service.buscar_usuario_por_documento(tipo_ident, num_ident):
+            messages.error(request, "Ya existe un usuario con ese número de identificación.")
             return render(request, "registro.html")
 
         # ── 4. Obtener idRol = Cliente ────────────────────────
@@ -100,6 +105,7 @@ def register_view(request):
             result = mongo_service.crear_usuario(usuario_doc)
             print("DEBUG INSERT OK → id:", result.inserted_id)
         except errors.DuplicateKeyError as e:
+            # Si por alguna carrera se cuela un duplicado, caemos aquí
             print("DEBUG DUPLICATE ERROR →", e)
             messages.error(
                 request,
@@ -108,7 +114,7 @@ def register_view(request):
             return render(request, "registro.html")
         except Exception as e:
             print("DEBUG ERROR INSERTANDO →", e)
-            messages.error(request, f"Error al registrar el usuario: {e}")
+            messages.error(request, "Error al registrar el usuario. Inténtalo de nuevo.")
             return render(request, "registro.html")
 
         # ── 7. Listo, redirigimos al login ────────────────────
@@ -117,4 +123,34 @@ def register_view(request):
 
     # Método GET
     return render(request, "registro.html")
+
+
+def custom_404(request, exception):
+    """
+    Vista para errores 404 (página no encontrada).
+    """
+    return render(request, "404.html", status=404)
+
+
+def custom_500(request):
+    """
+    Vista para errores 500 (error interno del servidor).
+    """
+    return render(request, "500.html", status=500)
+
+def demo_404(request):
+    """
+    Vista solo para DEMOSTRACIÓN de la página 404.
+    """
+    return render(request, "404.html", status=404)
+
+
+def demo_error_500(request):
+    """
+    Vista solo para DEMOSTRACIÓN de la página 500.
+    No lanza error real, solo renderiza la plantilla.
+    """
+    return render(request, "500.html", status=200)
+
+
 

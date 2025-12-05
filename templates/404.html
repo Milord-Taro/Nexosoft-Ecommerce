@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,10 +9,8 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- CSS del error 404 y 500 -->
-  
-  
-  <link rel="stylesheet" href="../css/css/error404.css">
+  <!-- CSS del error 404 -->
+  <link rel="stylesheet" href="{% static 'css/error404.css' %}">
 </head>
 
 <body>
@@ -19,14 +19,12 @@
     <!-- HEADER -->
     <header class="app-header">
       <div class="brand">
-        
-        <img src="../logo.png" alt="NEXOSOFT Logo">
+        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
       </div>
 
       <div class="header-actions">
-        <!-- paginaprincipal.html está en la MISMA carpeta que 404.html -->
-        <a href="paginaprincipal.html" class="btn">Ir al inicio</a>
-        <a href="paginaprincipal.html" class="btn btn-primary">Volver al dashboard</a>
+        <a href="{% url 'landing' %}" class="btn">Ir al inicio</a>
+        <a href="{% url 'landing' %}" class="btn btn-primary">Volver al dashboard</a>
       </div>
     </header>
 
@@ -62,15 +60,14 @@
 
           <div class="error-footer-actions">
             <a href="javascript:history.back()" class="btn">Volver atrás</a>
-            <a href="paginaprincipal.html" class="btn btn-primary">Ir al inicio</a>
+            <a href="{% url 'landing' %}" class="btn btn-primary">Ir al inicio</a>
           </div>
         </div>
       </article>
 
       <!-- CARD DERECHO -->
       <article class="card-right-clean">
-        <!-- La imagen 404 está en la raíz junto a logo.png -->
-        <img src="../404.png" alt="Error 404">
+        <img src="{% static 'img/404.png' %}" alt="Error 404">
       </article>
 
     </section>

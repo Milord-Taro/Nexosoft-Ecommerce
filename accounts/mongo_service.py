@@ -77,3 +77,38 @@ def hash_password(password_plana: str) -> str:
     salt = bcrypt.gensalt(rounds=12)
     pwd_hash = bcrypt.hashpw(password_plana.encode("utf-8"), salt)
     return pwd_hash.decode("utf-8")
+
+def buscar_usuario_por_documento(tipo_ident: str, numero_ident: str):
+    col = get_usuarios_collection()
+    return col.find_one({
+        "tipoIdentificacion": tipo_ident,
+        "numeroIdentificacion": numero_ident
+    })
+
+def obtener_usuario_por_id(id_str: str):
+    """
+    Devuelve el documento de usuario dado su _id en formato string.
+    """
+    usuarios = get_usuarios_collection()
+    try:
+        oid = ObjectId(id_str)
+    except Exception:
+        return None
+    return usuarios.find_one({"_id": oid})
+
+
+def actualizar_usuario(usuario_id: str, campos: dict):
+    """
+    Actualiza los campos indicados en el usuario con ese _id.
+    """
+    usuarios = get_usuarios_collection()
+    oid = ObjectId(usuario_id)
+    return usuarios.update_one({"_id": oid}, {"$set": campos})
+
+
+def marcar_usuario_eliminado(usuario_id: str):
+    """
+    Marca la cuenta como 'eliminado' en estadoCuenta.
+    (Para proyecto educativo es mejor que borrar físicamente).
+    """
+    return actualizar_usuario(usuario_id, {"estadoCuenta": "eliminado"})

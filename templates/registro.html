@@ -170,14 +170,21 @@
                     placeholder="••••••••"
                     required
                     minlength="6"
-                    maxlength="16"
-                    pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,16}"
-                    title="Debe tener entre 6 y 16 caracteres, con letras y números."
+                    minlength="8"
+                    maxlength="32"
+                    title="Debe tener entre 8 y 32 caracteres, con mayúsculas, minúsculas, números y símbolos."
                   />
                   <span class="toggle-password" data-target="regPass1">👁</span>
                 </div>
+                <!-- Medidor de fuerza -->
+                <div class="password-strength">
+                  <div id="passwordStrengthBar" class="password-strength-bar"></div>
+                  <span id="passwordStrengthText" class="password-strength-text">
+                    Contraseña muy débil
+                  </span>
+                </div>
               </div>
-
+                
               <!-- CONFIRMAR CONTRASEÑA -->
               <div class="form-group">
                 <label for="regPass2">Confirmar contraseña</label>
@@ -221,37 +228,95 @@
 
   <!-- // Validación de coincidencia de contraseñas en tiempo real -->
   <script>
-    const form = document.querySelector("form");
-    const pass1 = document.getElementById("regPass1");
-    const pass2 = document.getElementById("regPass2");
-    
-    function validarPasswords() {
-      if (pass1.value !== pass2.value) {
-        pass2.setCustomValidity("Las contraseñas no coinciden.");
-      } else {
-        pass2.setCustomValidity("");
-      }
-    }
-    
-    pass1.addEventListener("input", validarPasswords);
-    pass2.addEventListener("input", validarPasswords);
-    
-    form.addEventListener("submit", function(event) {
-      validarPasswords();
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        form.reportValidity();
-      }
-    });
+  const form = document.querySelector("form");
+  const pass1 = document.getElementById("regPass1");
+  const pass2 = document.getElementById("regPass2");
+  const strengthBar = document.getElementById("passwordStrengthBar");
+  const strengthText = document.getElementById("passwordStrengthText");
+  
+  function calcularNivel(password) {
+    let nivel = 0;
 
-    // Mostrar/ocultar contraseñas
-    document.querySelectorAll(".toggle-password").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const input = document.getElementById(btn.dataset.target);
-        input.type = input.type === "password" ? "text" : "password";
-      });
+    if (password.length >= 8) nivel++;                        // longitud mínima
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) nivel++; // mayúsculas + minúsculas
+    if (/\d/.test(password)) nivel++;                        // números
+    if (/[^A-Za-z0-9]/.test(password)) nivel++;              // símbolos
+
+    return nivel;
+  }
+  
+  function actualizarFuerza() {
+    const pwd = pass1.value;
+    const nivel = calcularNivel(pwd);
+
+    if (!pwd) {
+      strengthBar.removeAttribute("data-level");
+      strengthText.textContent = "Contraseña vacía";
+      return;
+    }
+
+    strengthBar.setAttribute("data-level", nivel);
+
+    switch (nivel) {
+      case 1:
+        strengthText.textContent = "Contraseña muy débil";
+        break;
+      case 2:
+        strengthText.textContent = "Contraseña débil";
+        break;
+      case 3:
+        strengthText.textContent = "Contraseña aceptable";
+        break;
+      case 4:
+        strengthText.textContent = "Contraseña fuerte";
+        break;
+    }
+  }
+
+  function validarPasswords() {
+    // Reglas mínimas de seguridad
+    const pwd = pass1.value;
+    const nivel = calcularNivel(pwd);
+
+    if (nivel < 3) {
+      pass1.setCustomValidity(
+        "La contraseña debe tener al menos 8 caracteres, mayúsculas, minúsculas, números y algún símbolo."
+      );
+    } else {
+      pass1.setCustomValidity("");
+    }
+
+    // Coincidencia
+    if (pass1.value !== pass2.value) {
+      pass2.setCustomValidity("Las contraseñas no coinciden.");
+    } else {
+      pass2.setCustomValidity("");
+    }
+  }
+
+  pass1.addEventListener("input", () => {
+    actualizarFuerza();
+    validarPasswords();
+  });
+
+  pass2.addEventListener("input", validarPasswords);
+
+  form.addEventListener("submit", function (event) {
+    validarPasswords();
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      form.reportValidity();
+    }
+  });
+  
+  // Mostrar/ocultar contraseñas
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
     });
-    
-    </script>
+  });
+</script>
 </body>
 </html>
