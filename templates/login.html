@@ -1,0 +1,115 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nexosoft – Iniciar sesión</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fuente Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS del login -->
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="brand">
+        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+      </div>
+
+      <div class="header-actions">
+        <a href="{% url 'landing' %}" class="btn-outline">Volver a la tienda</a>
+        <a href="{% url 'registro' %}" class="btn-primary">Crear cuenta</a>
+      </div>
+    </header>
+
+    <!-- LOGIN -->
+    <main>
+      <section class="auth-wrapper">
+        <article class="auth-card">
+          <div class="auth-header">
+            <h1 class="auth-title">Iniciar sesión</h1>
+            <p class="auth-subtitle">
+              Ingresa a tu cuenta para continuar con tus compras en Nexosoft.
+            </p>
+          </div>
+
+          {% if messages %}
+            <div class="auth-messages">
+              {% for message in messages %}
+                <div class="auth-message {{ message.tags }}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          
+          <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <div class="auth-body">
+              <div class="form-group">
+                <label for="loginEmail">Correo electrónico</label>
+                <input
+                  id="loginEmail"
+                  name="email"
+                  type="email"
+                  class="form-input"
+                  placeholder="correo@ejemplo.com"
+                  required
+                />
+              </div>
+            
+              <div class="form-group">
+                <label for="loginPassword">Contraseña</label>
+                <input
+                  id="loginPassword"
+                  name="password"
+                  type="password"
+                  class="form-input"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div class="auth-footer">
+              <span class="auth-footer-text">
+                ¿Aún no tienes cuenta?
+                <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>
+              </span>
+            
+              <button class="btn-primary" type="submit">
+                Iniciar sesión
+              </button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-bottom">
+        <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+        <span class="footer-made-with">
+          Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  
+  </div>
+
+
+
+</body>
+</html>

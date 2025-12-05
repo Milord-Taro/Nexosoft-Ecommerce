@@ -1,0 +1,230 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nexosoft – Registro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fuente Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- css/login.css -->
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- HEADER (igual que antes) -->
+    <header class="main-header">
+      <div class="brand">
+        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+      </div>
+
+      <div class="header-actions">
+        <a href="{% url 'landing' %}" class="btn-outline">Volver a la tienda</a>
+        <a href="{% url 'login' %}" class="btn-primary">Iniciar sesión</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="auth-wrapper">
+        <article class="auth-card">
+          <div class="auth-header">
+            {% if messages %}
+              <div class="auth-messages">
+                {% for message in messages %}
+                  <div class="auth-message {{ message.tags }}">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <h1 class="auth-title">Crear cuenta</h1>
+            <p class="auth-subtitle">Regístrate para comprar en Nexosoft.</p>
+          </div>
+
+          <!-- FORMULARIO COMPLETO -->
+          <form id="regForm" method="post" action="{% url 'registro' %}" novalidate>
+            {% csrf_token %}
+            <div class="auth-body">
+
+              <!-- NOMBRE -->
+              <div class="form-group">
+                <label for="regName">Nombres</label>
+                <input
+                  id="regName"
+                  name="nombres"
+                  type="text"
+                  class="form-input"
+                  placeholder="Ej: Juan Carlos"
+                  required
+                  minlength="2"
+                  maxlength="60"
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                  title="Solo se permiten letras y espacios, entre 2 y 60 caracteres."
+                />
+              </div>
+
+              <!-- APELLIDO -->
+              <div class="form-group">
+                <label for="regLast">Apellidos</label>
+                 <input
+                    id="regLast"
+                    name="apellidos"
+                    type="text"
+                    class="form-input"
+                    placeholder="Ej: Ramírez Torres"
+                    required
+                    minlength="2"
+                    maxlength="60"
+                    pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                    title="Solo se permiten letras y espacios, entre 2 y 60 caracteres."
+                  />
+              </div>
+
+              <!-- CORREO -->
+              <div class="form-group">
+                <label for="regEmail">Correo electrónico</label>
+                <input
+                  id="regEmail"
+                  name="correoElectronico"
+                  type="email"
+                  class="form-input"
+                  placeholder="correo@gmail.com"
+                  required
+                  maxlength="60"
+                  pattern="^[^@\s]+@(gmail\.com|hotmail\.com|outlook\.com|yahoo\.com)$"
+                  title="Solo se permiten correos con dominios: gmail.com, hotmail.com, outlook.com o yahoo.com"
+                />
+              </div>
+
+              <!-- TELÉFONO -->
+              <div class="form-group">
+                <label for="regPhone">Teléfono</label>
+                <input
+                  id="regPhone"
+                  name="telefono"
+                  type="tel"
+                  class="form-input"
+                  placeholder="Ej: 3157894421"
+                  required
+                  minlength="10"
+                  maxlength="10"
+                  pattern="^3[0-9]{9}$"
+                  title="Debe ser un celular colombiano de 10 dígitos que comienza en 3."
+                />
+              </div>
+
+              <!-- TIPO DOCUMENTO -->
+              <div class="form-group">
+                <label for="regTipoId">Tipo de identificación</label>
+                  <select
+                    id="regTipoId"
+                    name="tipoIdentificacion"
+                    class="form-input"
+                    required
+                  >
+                    <option value="">Selecciona una opción</option>
+                    <option value="CC">Cédula de ciudadanía</option>
+                    <option value="CE">Cédula de extranjería</option>
+                    <option value="NIT">NIT</option>
+                    <option value="PASAPORTE">Pasaporte</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
+              </div>
+
+
+              <!-- NUMERO DOCUMENTO -->
+              <div class="form-group">
+                <label for="regDoc">Documento de identidad</label>
+                <input 
+                  id="regDoc" 
+                  name="numeroIdentificacion" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Ej: 1234567890" 
+                  required
+                  minlength="5"
+                  maxlength="15"
+                  pattern="[0-9]{5,15}"
+                  title="Debe contener solo dígitos, entre 5 y 15 caracteres."
+                />
+              </div>
+
+              <!-- CONTRASEÑA -->
+              <div class="form-group">
+                <label for="regPass">Contraseña</label>
+                <input
+                  id="regPass"
+                  name="password"
+                  type="password"
+                  class="form-input"
+                  placeholder="••••••••"
+                  required
+                  minlength="6"
+                  maxlength="16"
+                  pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,16}"
+                  title="Debe tener entre 6 y 16 caracteres, con al menos una letra y un número."
+                />
+              </div>
+
+              <!-- CONFIRMAR CONTRASEÑA -->
+              <div class="form-group">
+                <label for="regPass2">Confirmar contraseña</label>
+                <input
+                   id="regPass2"
+                   name="password2"
+                   type="password"
+                   class="form-input"
+                   placeholder="Repite tu contraseña"
+                   required
+                   minlength="6"
+                   maxlength="16"
+                />
+              </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="auth-footer">
+              <span>¿Ya tienes cuenta?</span>
+
+              <!-- BOTÓN FUNCIONAL -->
+              <button type="submit" class="btn-primary">Crear</button>
+            </div>
+          </form>
+
+        </article>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- VALIDACIONES JAVASCRIPT -->
+  <script>
+    const form = document.getElementById("regForm");
+    const pass = document.getElementById("regPass");
+    const pass2 = document.getElementById("regPass2");
+
+    form.addEventListener("submit", function (e) {
+
+      // Validación de contraseñas iguales
+      if (pass.value !== pass2.value) {
+        pass2.setCustomValidity("Las contraseñas no coinciden");
+      } else {
+        pass2.setCustomValidity("");
+      }
+
+      // Si hay error, impedir envío y mostrar mensajes
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        form.reportValidity(); // <-- MUESTRA LOS ERRORES SOLO AL OPRIMIR "CREAR"
+      }
+    });
+  </script>
+
+</body>
+</html>

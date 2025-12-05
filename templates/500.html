@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Error 500 – Error interno del servidor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fuente Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  
+  <link rel="stylesheet" href="../css/css/error500.css">
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand">
+        <!-- logo.png está en la RAÍZ del proyecto -->
+        <img src="../logo.png" alt="NEXOSOFT Logo">
+      </div>
+
+      <div class="header-actions">
+        <!-- paginaprincipal.html está en la MISMA carpeta que 500.html -->
+        <a href="paginaprincipal.html" class="btn">Ir al inicio</a>
+        <a href="paginaprincipal.html" class="btn btn-primary">Volver al dashboard</a>
+      </div>
+    </header>
+
+  
+    <section class="cards-grid">
+
+      
+      <article class="card">
+        <div class="card-error-header">
+          <div class="card-error-header-left">
+            <span class="error-code-large">500</span>
+            <h1 class="error-title">Ha ocurrido un error interno en el servidor</h1>
+            <span class="error-tag-status">
+              <span class="dot"></span>
+              error del servidor
+            </span>
+          </div>
+
+          <div class="card-error-header-right">
+            <div>Referencia: #WEB-500-01</div>
+          </div>
+        </div>
+
+        <div class="card-error-body">
+          Se produjo un problema interno inesperado al procesar la solicitud.  
+          Es posible que el servidor esté en mantenimiento o haya ocurrido un fallo temporal.
+        </div>
+
+        <div class="card-error-footer">
+          <p class="error-footer-text">
+            Puedes volver al inicio o regresar al dashboard.
+          </p>
+
+          <div class="error-footer-actions">
+            <a href="javascript:history.back()" class="btn">Volver atrás</a>
+            <a href="paginaprincipal.html" class="btn btn-primary">Ir al inicio</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- CARD DERECHO (ilustración) -->
+      <article class="card-right-clean">
+        
+        <img src="../500.png" alt="Error 500">
+      </article>
+
+    </section>
+
+  </div>
+</body>
+</html>

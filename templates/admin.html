@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nexosoft – Panel administrador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fuente Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS del panel admin (desde /indexhtml sube a raíz y entra a /css/css) -->
+  <link rel="stylesheet" href="../css/css/admin.css">
+
+  <!-- JS del panel admin -->
+  <script src="../js/admin.js" defer></script>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="brand">
+        <!-- logo.png está en la raíz -->
+        <img src="../logo.png" alt="NEXOSOFT Logo">
+      </div>
+
+      <div class="header-center">
+        <h1 class="page-title">Panel administrador</h1>
+        <p class="page-subtitle">Gestiona los productos publicados en Nexosoft.</p>
+      </div>
+
+      <div class="header-actions">
+        <a href="paginaprincipal.html" class="btn-outline">Ver tienda</a>
+        <a href="login.html" class="btn-primary">Cerrar sesión</a>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="admin-layout">
+      <!-- LISTA DE PRODUCTOS -->
+      <section class="admin-block">
+        <div class="admin-block-header">
+          <h2 class="admin-block-title">Productos</h2>
+          <button type="button" class="btn-small" id="btnNuevoProducto">
+            + Nuevo producto
+          </button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <!-- JS rellena aquí la tabla -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FORMULARIO DE EDICIÓN / CREACIÓN -->
+      <section class="admin-block admin-form-block">
+        <h2 class="admin-block-title">Editar / Crear producto</h2>
+
+        <form id="productForm" class="product-form">
+          <!-- Campo oculto para saber si estamos editando o creando -->
+          <input type="hidden" id="prodId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodTitulo">Título</label>
+              <input type="text" id="prodTitulo" class="form-input" placeholder="Nombre del producto" required>
+            </div>
+
+            <div class="form-group">
+              <label for="prodCategoria">Categoría</label>
+              <select id="prodCategoria" class="form-input" required>
+                <option value="">Selecciona una categoría</option>
+                <option>Herramientas Eléctricas</option>
+                <option>Herramientas Manuales</option>
+                <option>Pintura</option>
+                <option>Escaleras</option>
+                <option>Medición</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodVendedor">Vendedor</label>
+              <input type="text" id="prodVendedor" class="form-input" placeholder="Nombre de la ferretería" required>
+            </div>
+
+            <div class="form-group">
+              <label for="prodPrecio">Precio (USD)</label>
+              <input type="number" step="0.01" id="prodPrecio" class="form-input" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodStock">Estado de stock</label>
+              <input type="text" id="prodStock" class="form-input" placeholder="En stock, Agotado, Últimas unidades" required>
+            </div>
+
+            <div class="form-group">
+              <label for="prodImagen">Ruta de imagen</label>
+              <input type="text" id="prodImagen" class="form-input" placeholder="img/mi-imagen.jpg">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prodDescripcion">Descripción</label>
+            <textarea id="prodDescripcion" class="form-input" rows="3" placeholder="Descripción corta del producto" required></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Guardar cambios</button>
+            <button type="button" class="btn-outline" id="btnLimpiarFormulario">Limpiar</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <!-- FOOTER SIMPLE -->
+    <footer class="site-footer">
+      <div class="footer-bottom">
+        <span>© 2025 NEXOSOFT. Panel administrador.</span>
+        <span class="footer-made-with">
+          Hecho con <span class="footer-heart">❤</span> para nuestras ferreterías aliadas
+        </span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
