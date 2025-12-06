@@ -3,6 +3,7 @@ from django.conf import settings
 from pymongo import MongoClient, errors
 from bson import ObjectId
 import bcrypt
+from datetime import datetime, timezone
 
 _client = None
 _db = None
@@ -48,7 +49,7 @@ def obtener_id_rol(nombre_rol: str) -> ObjectId | None:
 
 def buscar_usuario_por_correo(correo: str):
     usuarios = get_usuarios_collection()
-    return usuarios.find_one({"correoElectronico": correo})
+    return usuarios.find_one({"correoElectronico": correo.lower()})
 
 def crear_usuario(datos: dict):
     """
@@ -96,19 +97,47 @@ def obtener_usuario_por_id(id_str: str):
         return None
     return usuarios.find_one({"_id": oid})
 
-
-def actualizar_usuario(usuario_id: str, campos: dict):
-    """
-    Actualiza los campos indicados en el usuario con ese _id.
-    """
-    usuarios = get_usuarios_collection()
-    oid = ObjectId(usuario_id)
-    return usuarios.update_one({"_id": oid}, {"$set": campos})
-
-
 def marcar_usuario_eliminado(usuario_id: str):
     """
     Marca la cuenta como 'eliminado' en estadoCuenta.
     (Para proyecto educativo es mejor que borrar físicamente).
     """
     return actualizar_usuario(usuario_id, {"estadoCuenta": "eliminado"})
+
+
+def actualizar_usuario(usuario_id: str, campos: dict) -> bool:
+    """
+    Actualiza los campos indicados para el usuario.
+    Retorna True si modificó algún documento.
+    """
+    col = get_usuarios_collection()
+    try:
+        oid = ObjectId(usuario_id)
+    except Exception:
+        return False
+
+    result = col.update_one({"_id": oid}, {"$set": campos})
+    return result.modified_count > 0
+
+
+def marcar_usuario_para_eliminacion(usuario_id: str) -> bool:
+    """
+    Marca el usuario como pendiente de eliminación.
+    No borra físicamente el registro.
+    """
+    col = get_usuarios_collection()
+    try:
+        oid = ObjectId(usuario_id)
+    except Exception:
+        return False
+
+    result = col.update_one(
+        {"_id": oid},
+        {
+            "$set": {
+                "estadoCuenta": "pendiente_eliminacion",
+                "fechaSolicitudEliminacion": datetime.now(timezone.utc),
+            }
+        },
+    )
+    return result.modified_count > 0

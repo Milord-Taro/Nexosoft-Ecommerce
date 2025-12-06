@@ -52,7 +52,7 @@
             </p>
           </div>
 
-          <form method="post" action="{% url 'login' %}">
+          <form id="loginForm" method="post" action="{% url 'login' %}" novalidate>
             {% csrf_token %}
 
             <div class="auth-body">
@@ -120,6 +120,124 @@
       });
     });
   </script>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  if (!form) return;
+
+  const campos = form.querySelectorAll("input");
+
+  function obtenerMensajeError(campo) {
+    const v = campo.validity;
+    const name = campo.name;
+
+    // 1) Campo vacío
+    if (v.valueMissing) {
+      switch (name) {
+        case "email":
+          return "Ingresa tu correo electrónico.";
+        case "password":
+          return "Ingresa tu contraseña.";
+        default:
+          return "Este campo es obligatorio.";
+      }
+    }
+
+    // 2) Email inválido
+    if (v.typeMismatch && campo.type === "email") {
+      return "Ingresa un correo electrónico válido.";
+    }
+
+    // 3) Si quisieras añadir minlength / pattern al password
+    if (v.tooShort || v.patternMismatch) {
+      if (name === "password") {
+        return "La contraseña no es válida. Verifica tus datos.";
+      }
+    }
+
+    // 4) Sin errores
+    return "";
+  }
+
+  function mostrarError(campo, mensaje) {
+    campo.classList.add("input-error");
+
+    let errorDiv = campo.parentElement.querySelector(".field-error");
+    // si el HTML tiene un wrapper (ej. password-wrapper), subimos un nivel
+    if (!errorDiv && campo.parentElement.classList.contains("password-wrapper")) {
+      errorDiv = campo.parentElement.parentElement.querySelector(".field-error");
+    }
+
+    if (!errorDiv) {
+      errorDiv = document.createElement("div");
+      errorDiv.className = "field-error";
+
+      // si es password con wrapper, insertamos el error debajo del grupo
+      if (campo.parentElement.classList.contains("password-wrapper")) {
+        campo.parentElement.parentElement.appendChild(errorDiv);
+      } else {
+        campo.parentElement.appendChild(errorDiv);
+      }
+    }
+    errorDiv.textContent = mensaje;
+  }
+
+  function limpiarError(campo) {
+    campo.classList.remove("input-error");
+    let errorDiv = campo.parentElement.querySelector(".field-error");
+    if (!errorDiv && campo.parentElement.classList.contains("password-wrapper")) {
+      errorDiv = campo.parentElement.parentElement.querySelector(".field-error");
+    }
+    if (errorDiv) {
+      errorDiv.textContent = "";
+    }
+  }
+
+  function validarCampo(campo) {
+    campo.setCustomValidity(""); // por si acaso
+
+    const mensaje = obtenerMensajeError(campo);
+
+    if (mensaje) {
+      mostrarError(campo, mensaje);
+      return false;
+    } else {
+      limpiarError(campo);
+      return true;
+    }
+  }
+
+  // Validar al enviar
+  form.addEventListener("submit", (e) => {
+    let formularioValido = true;
+    let primerInvalido = null;
+
+    campos.forEach(campo => {
+      const ok = validarCampo(campo);
+      if (!ok && !primerInvalido) {
+        primerInvalido = campo;
+        formularioValido = false;
+      }
+    });
+
+    if (!formularioValido) {
+      e.preventDefault();
+      if (primerInvalido) {
+        primerInvalido.focus();
+      }
+    }
+  });
+
+  // Validar mientras escribe
+  campos.forEach(campo => {
+    campo.addEventListener("input", () => {
+      validarCampo(campo);
+    });
+  });
+});
+</script>
+
 
 </body>
 </html>

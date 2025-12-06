@@ -4,17 +4,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mi Perfil – Nexosoft</title>
+  <title>Mi perfil – Nexosoft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Fuente -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+  <!-- Reutilizamos login.css para cards / botones -->
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
 
   <style>
     .perfil-wrapper {
       max-width: 900px;
       margin: 32px auto 48px;
       display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
       gap: 24px;
       font-family: Montserrat, sans-serif;
     }
@@ -187,7 +191,7 @@
           Gestiona la información de tu cuenta de cliente.
         </p>
 
-        <form method="post" action="{% url 'perfil' %}">
+        <form id="perfilForm" method="post" action="{% url 'perfil' %}">
           {% csrf_token %}
           <input type="hidden" name="action" value="update">
 
@@ -281,7 +285,7 @@
         <h2 class="delete-card-title">Solicitar eliminación de cuenta</h2>
         <p class="delete-card-text">
           Si ya no deseas usar Nexosoft, puedes solicitar la eliminación de tu cuenta.
-          Para este proyecto, esto marcará tu cuenta como <b>eliminada</b> y se cerrará tu sesión.
+          Esto marcará tu cuenta como <b>eliminada</b> y se cerrará tu sesión.
         </p>
 
         <form method="post" action="{% url 'perfil' %}" onsubmit="return confirm('¿Estás seguro de que deseas solicitar la eliminación de tu cuenta?');">
@@ -307,5 +311,132 @@
       </div>
     </footer>
   </div>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("perfilForm");
+  if (!form) return;
+
+  // Todos los campos obligatorios dentro del formulario
+  const campos = form.querySelectorAll("input[required], select[required]");
+
+  function obtenerMensajeError(campo) {
+    const v = campo.validity;
+    const name = campo.name;
+
+    // 1) Campo vacío
+    if (v.valueMissing) {
+      switch (name) {
+        case "nombres":              return "Ingresa tus nombres.";
+        case "apellidos":            return "Ingresa tus apellidos.";
+        case "correoElectronico":    return "Ingresa tu correo electrónico.";
+        case "telefono":             return "Ingresa tu número de celular.";
+        case "tipoIdentificacion":   return "Selecciona un tipo de identificación.";
+        case "numeroIdentificacion": return "Ingresa tu número de identificación.";
+        default:                     return "Este campo es obligatorio.";
+      }
+    }
+
+    // 2) Tipo email incorrecto
+    if (v.typeMismatch && campo.type === "email") {
+      return "Ingresa un correo electrónico válido.";
+    }
+
+    // 3) Longitud mínima / máxima
+    if (v.tooShort || v.tooLong) {
+      switch (name) {
+        case "nombres":
+        case "apellidos":
+          return "Este campo debe tener entre 2 y 60 caracteres.";
+        case "numeroIdentificacion":
+          return "El número de identificación debe tener entre 5 y 15 dígitos.";
+        case "telefono":
+          return "El número de celular debe tener 10 dígitos.";
+        default:
+          return "La longitud del valor no es válida.";
+      }
+    }
+
+    // 4) Pattern / regex
+    if (v.patternMismatch) {
+      switch (name) {
+        case "nombres":
+        case "apellidos":
+          return "Solo se permiten letras y espacios en este campo.";
+        case "numeroIdentificacion":
+          return "El número de identificación debe contener solo dígitos (5 a 15).";
+        case "correoElectronico":
+          return "Ingresa un correo válido (gmail, hotmail, outlook o yahoo).";
+        case "telefono":
+          return "El celular debe empezar por 3 y tener 10 dígitos.";
+        default:
+          return "El formato de este campo no es válido.";
+      }
+    }
+
+    // 5) Todo ok
+    return "";
+  }
+
+  function mostrarError(campo, mensaje) {
+    campo.classList.add("input-error");
+
+    let errorDiv = campo.parentElement.querySelector(".field-error");
+    if (!errorDiv) {
+      errorDiv = document.createElement("div");
+      errorDiv.className = "field-error";
+      campo.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = mensaje;
+  }
+
+  function limpiarError(campo) {
+    campo.classList.remove("input-error");
+    const errorDiv = campo.parentElement.querySelector(".field-error");
+    if (errorDiv) {
+      errorDiv.textContent = "";
+    }
+  }
+
+  function validarCampo(campo) {
+    // Desactivamos globos nativos del navegador
+    campo.setCustomValidity("");
+
+    const mensaje = obtenerMensajeError(campo);
+
+    if (mensaje) {
+      mostrarError(campo, mensaje);
+      return false;
+    } else {
+      limpiarError(campo);
+      return true;
+    }
+  }
+
+  // Validar al enviar
+  form.addEventListener("submit", (e) => {
+    let valido = true;
+    let primeroInvalido = null;
+
+    campos.forEach((campo) => {
+      const ok = validarCampo(campo);
+      if (!ok && !primeroInvalido) {
+        primeroInvalido = campo;
+        valido = false;
+      }
+    });
+
+    if (!valido) {
+      e.preventDefault();
+      if (primeroInvalido) primeroInvalido.focus();
+    }
+  });
+
+  // Validar mientras escribe
+  campos.forEach((campo) => {
+    campo.addEventListener("input", () => validarCampo(campo));
+  });
+});
+</script>
 </body>
 </html>

@@ -10,7 +10,7 @@ def landing(request):
 
 def login_view(request):
     if request.method == "POST":
-        correo = request.POST.get("email", "").strip()
+        correo = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "")
 
         if not correo or not password:
@@ -48,6 +48,7 @@ def logout_view(request):
 def perfil_view(request):
     # 1) Verificar que haya sesión
     usuario_id = request.session.get("usuario_id")
+    
     if not usuario_id:
         messages.error(request, "Debes iniciar sesión para ver tu perfil.")
         return redirect("login")
