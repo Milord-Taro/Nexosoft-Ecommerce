@@ -1,0 +1,279 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>NEXOSOFT – Carrito de compras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  
+</head>
+
+<body>
+<div class="app-wrapper">
+
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="brand">
+      <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+    </div>
+
+    <div class="header-search">
+      <input type="text" placeholder="Buscar productos...">
+    </div>
+
+    <div class="header-actions">
+        <!-- Carrito -->
+        <a href="{% url 'carrito' %}" class="cart-icon-wrapper">
+          🛒
+          <span id="cartCount" class="cart-count">0</span>
+        </a>
+          
+
+      {% if request.session.usuario_id %}
+        <span class="user-greeting">
+          Hola, {{ request.session.usuario_nombre }}
+        </span>
+
+        <a href="{% url 'perfil' %}" class="btn-outline">
+          Mi perfil
+        </a>
+
+        <a href="{% url 'logout' %}" class="btn-outline">
+          Cerrar sesión
+        </a>
+      {% else %}
+        <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">
+          Ingresar
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- MENSAJES -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main>
+    <section id="tiendaSection">
+      <div class="carrito-layout">
+
+        <!-- COLUMNA IZQUIERDA: LISTA DE ITEMS -->
+        <section class="carrito-card">
+          <h1 class="carrito-title">Tus productos</h1>
+
+          {% if items %}
+            <table class="carrito-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-center"></th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio </th>
+                    <th>Subtotal</th>
+                    <th>Stock</th>
+                    <th>Estado precio</th>
+                  </tr>
+                </thead>
+                
+              <tbody>
+              {% for item in items %}
+                <tr>
+                  <!-- Seleccionado / no seleccionado -->
+                  <td class="checkbox-center">
+                    <form action="{% url 'carrito_actualizar_seleccion' %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ item.idProducto }}">
+                      <input
+                        type="hidden"
+                        name="seleccionado"
+                        value="{% if item.seleccionado %}false{% else %}true{% endif %}"
+                      >
+                      <button type="submit" class="btn btn-sm {% if item.seleccionado %}btn-primary{% else %}btn-outline{% endif %}">
+                        {% if item.seleccionado %}✓{% else %}-{% endif %}
+                      </button>
+                    </form>
+                  </td>
+
+                  <!-- Nombre -->
+                  <td>
+                    <strong>{{ item.nombreProducto }}</strong>
+                  </td>
+
+                  <!-- Cantidad -->
+                  <td>
+                      <form action="{% url 'carrito_actualizar_cantidad' %}"
+                            method="post"
+                            class="qty-form"
+                            style="display:flex; align-items:center; gap:0.4rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="producto_id" value="{{ item.idProducto }}">
+                        <input
+                          type="number"
+                          name="cantidad"
+                          class="qty-input auto-submit-qty"
+                          min="0"
+                          value="{{ item.cantidad }}"
+                        >
+                        <button type="submit" name="cantidad" value="0" class="btn-trash">
+                            🗑
+                        </button>
+                        </form>
+                    </td>
+
+
+                  <!-- Precio snapshot -->
+                  <td>
+                    <span class="price">$ {{ item.precio_snapshot|floatformat:0 }}</span>
+                  </td>
+
+                               <!-- Subtotal snapshot -->
+              <td>
+                <span class="price">$ {{ item.subtotal_snapshot|floatformat:0 }}</span>
+              </td>
+
+              <!-- Stock -->
+              <td class="stock-cell">
+                  {% if item.stock_actual is not None %}
+                    <span class="stock-number">{{ item.stock_actual }}</span>
+                    {% if item.stock_bajo %}
+                      <!-- Icono triangular de advertencia -->
+                      <span class="stock-warning-icon" title="Stock bajo en este producto"></span>
+                    {% endif %}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                  
+              <!-- Info de cambio de precio -->
+              <td>
+                {% if item.precio_actual and item.precio_cambio %}
+                  <span class="price-old">$ {{ item.precio_snapshot|floatformat:0 }}</span>
+                  <span class="price price-new">$ {{ item.precio_actual|floatformat:0 }}</span>
+                  <div class="price-note">El precio ha cambiado</div>
+                {% elif item.precio_actual %}
+                  <span class="price">$ {{ item.precio_actual|floatformat:0 }}</span>
+                {% else %}
+                  <span class="price-note">Producto no disponible</span>
+                {% endif %}
+              </td>
+
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-text">
+          Tu carrito está vacío. <a href="{% url 'landing' %}">Empieza a comprar</a>.
+        </div>
+        {% endif %}
+    </section>
+    
+    <!-- COLUMNA DERECHA: RESUMEN -->
+    <aside class="carrito-card">
+      <h2 class="carrito-title" style="font-size:1.1rem;">Resumen de compra</h2>
+
+      {% if carrito %}
+        <div class="summary-row">
+          <span>Total en carrito (todos):</span>
+          <span>$ {{ carrito.subtotalCarritoSnapshot|default:0|floatformat:0 }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Productos seleccionados:</span>
+          <span>$ {{ carrito.subtotalSeleccionadoSnapshot|default:0|floatformat:0 }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total estimado:</span>
+          <span>$ {{ carrito.totalSeleccionadoSnapshot|default:0|floatformat:0 }}</span>
+        </div>
+
+        {% if hay_precio_cambiado %}
+          <div style="margin-top:0.5rem; font-size:0.8rem; color:#c0392b;">
+            Algunos productos seleccionados cambiaron de precio recientemente.
+          </div>
+        {% endif %}
+
+        {% if hay_stock_bajo_seleccionado %}
+        <div class="stock-low-banner">
+            Algunos productos seleccionados tienen pocas unidades disponibles.
+            Te recomendamos finalizar la compra pronto para garantizar la disponibilidad.
+        </div>
+        {% endif %}
+        
+        {% if hay_stock_bajo_seleccionado %}
+        <div class="stock-warning">
+            Algunos productos seleccionados tienen stock bajo. Te recomendamos comprarlos pronto.
+        </div>
+        {% endif %}
+
+        <div class="summary-actions">
+          <form action="{% url 'carrito_checkout' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="metodo_entrega" value="domicilio">
+            <input type="hidden" name="metodo_pago" value="efectivo">
+            <input type="hidden" name="costo_envio" value="0">
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              {% if not items %}disabled{% endif %}
+            >
+              Finalizar compra
+            </button>
+          </form>
+
+          <a href="{% url 'landing' %}" class="btn btn-outline">Seguir comprando</a>
+        </div>
+      {% else %}
+        <div class="empty-text">
+          No se encontró un carrito activo.
+        </div>
+      {% endif %}
+    </aside>
+
+  </div>
+</section>
+</main>
+</div>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const qtyInputs = document.querySelectorAll(".auto-submit-qty");
+
+    qtyInputs.forEach(function (input) {
+      let timer = null;
+
+      // Se dispara cuando cambias el número y sales del input
+      input.addEventListener("change", function () {
+        if (timer) clearTimeout(timer);
+
+        const form = input.form;
+        if (!form) return;
+
+        // Pequeño delay por si el usuario sigue cambiando
+        timer = setTimeout(function () {
+          form.submit();
+        }, 300);
+      });
+
+      // Si quieres que funcione apenas deje de escribir, puedes usar "input" también:
+      // input.addEventListener("input", ... mismo código ...)
+    });
+  });
+</script>
+
+
+</body>
+</html>

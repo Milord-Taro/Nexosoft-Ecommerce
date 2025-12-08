@@ -17,7 +17,7 @@
   <script src="{% static 'js/app.js' %}" defer></script>
 </head>
 
-<body>
+<body> 
   <div class="app-wrapper">
 
     <!-- ==========================================================
@@ -25,194 +25,175 @@
     ========================================================== -->
     <header class="main-header">
       <div class="brand">
-        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        <a href="{% url 'landing' %}">
+          <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        </a>
       </div>
+
 
       <div class="header-search">
         <input type="text" placeholder="Buscar productos...">
       </div>
 
       <div class="header-actions">
-        <!-- Carrito → demo 500 -->
-
+        <!-- Carrito -->
+        <a href="{% url 'carrito' %}" class="cart-icon-wrapper">
           🛒
           <span id="cartCount" class="cart-count">0</span>
-      
+        </a>
+
+          
+        
         {% if request.session.usuario_id %}
           <span class="user-greeting">
             Hola, {{ request.session.usuario_nombre }}
           </span>
-      
-          <!-- Nuevo: enlace a perfil -->
-          <a href="{% url 'perfil' %}" class="btn-outline">
-            Mi perfil
-          </a>
-      
-          <a href="{% url 'logout' %}" class="btn-outline">
-            Cerrar sesión
-          </a>
-        {% else %}
-          <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">
-            Ingresar
-          </a>
-        {% endif %}
-
-      </div>
-    </header>
-
-    <!-- ==========================================================
-         TIENDA
-    ========================================================== -->
-    <main>
-      <section id="tiendaSection">
-        <div class="store-header-row">
-          <div>
-            <h2 class="store-title">Categorías</h2>
-            <p class="store-subtitle">Explora nuestras herramientas y productos de ferretería.</p>
+          
+              <a href="{% url 'perfil' %}" class="btn-outline">
+                Mi perfil
+              </a>
+              
+              <a href="{% url 'logout' %}" class="btn-outline">
+                Cerrar sesión
+              </a>
+            {% else %}
+              <a id="loginBtn" href="{% url 'login' %}" class="btn-outline">
+                Ingresar
+              </a>
+            {% endif %}
           </div>
-        </div>
+          
+        </header>
+        
+        <!-- ==========================================================
+             TIENDA
+        ========================================================== -->
+        <main>
+          
+          <section id="tiendaSection">
 
-        <!-- Categorías -->
-        <div class="category-bar" id="categoryBar">
-          <button class="category-pill active" data-category="Todos">Todos</button>
-          <button class="category-pill" data-category="Herramientas Eléctricas">Herramientas Eléctricas</button>
-          <button class="category-pill" data-category="Herramientas Manuales">Herramientas Manuales</button>
-          <button class="category-pill" data-category="Pintura">Pintura</button>
-          <button class="category-pill" data-category="Escaleras">Escaleras</button>
-          <button class="category-pill" data-category="Medición">Medición</button>
-        </div>
+            <div class="store-header-row">
+              <div>
+                <h2 class="store-title">Categorías</h2>
+                <p class="store-subtitle">Explora nuestras herramientas y productos de ferretería.</p>
+              </div>
+            </div>
 
-        <!-- Grid de productos -->
-        <div class="products-grid" id="productsGrid"></div>
-      </section>
-    </main>
+            <form action="{% url 'carrito_agregar' %}" method="post" style="margin-top: 1rem;">
+            {% csrf_token %}
+            <input type="hidden" name="producto_id" value="691b79d7ca7794a2b9fd0477">
+            <input type="hidden" name="cantidad" value="1">
+            <button type="submit" class="btn btn-primary">
+              Agregar producto de prueba al carrito
+            </button>
+          </form>
 
-    <!-- ==========================================================
-         FOOTER
-    ========================================================== -->
-    <footer class="site-footer">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <div class="footer-brand-logo">
-            <div class="footer-logo-icon">N</div>
-            <span class="footer-brand-name">NEXOSOFT</span>
+            <!-- Categorías -->
+            <div class="category-bar" id="categoryBar">
+              <button class="category-pill active" data-category="Todos">Todos</button>
+              <button class="category-pill" data-category="Herramientas Eléctricas">Herramientas Eléctricas</button>
+              <button class="category-pill" data-category="Herramientas Manuales">Herramientas Manuales</button>
+              <button class="category-pill" data-category="Pintura">Pintura</button>
+              <button class="category-pill" data-category="Escaleras">Escaleras</button>
+              <button class="category-pill" data-category="Medición">Medición</button>
+            </div>
+    
+            <!-- Grid de productos -->
+            <div class="products-grid" id="productsGrid"></div>
+          </section>
+        </main>
+    
+        <!-- ==========================================================
+             FOOTER
+        ========================================================== -->
+        <footer class="site-footer">
+          <div class="footer-top">
+            <div class="footer-brand">
+              <div class="footer-brand-logo">
+                <div class="footer-logo-icon">N</div>
+                <span class="footer-brand-name">NEXOSOFT</span>
+              </div>
+              <p class="footer-brand-text">
+                Tu tienda en línea de herramientas y productos de ferretería de confianza.
+              </p>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Enlaces Rápidos</h4>
+              <ul>
+                <li>Sobre Nosotros</li>
+                <li>Términos y Condiciones</li>
+                <li>Política de Privacidad</li>
+                <li>Preguntas Frecuentes</li>
+                <li>PQR - Peticiones, Quejas y Reclamos</li>
+                <!-- 👇 DEMOS DE ERRORES -->
+                <li><a href="{% url 'demo_404' %}">Error 404</a></li>
+                <li><a href="{% url 'demo_500' %}">Error 500</a></li>
+              </ul>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Contacto</h4>
+              <ul>
+                <li>Email: info@nexosoft.com</li>
+                <li>Teléfono: +57 3000000001</li>
+                <li>Dirección: Sena</li>
+                <li>Bogotá, Colombia</li>
+              </ul>
+            </div>
           </div>
-          <p class="footer-brand-text">
-            Tu tienda en línea de herramientas y productos de ferretería de confianza.
-          </p>
-        </div>
-
-        <div class="footer-column">
-          <h4>Enlaces Rápidos</h4>
-          <ul>
-            <li>Sobre Nosotros</li>
-            <li>Términos y Condiciones</li>
-            <li>Política de Privacidad</li>
-            <li>Preguntas Frecuentes</li>
-            <li>PQR - Peticiones, Quejas y Reclamos</li>
-            <!-- 👇 DEMOS DE ERRORES -->
-            <li><a href="{% url 'demo_404' %}">Error 404</a></li>
-            <li><a href="{% url 'demo_500' %}">Error 500</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-column">
-          <h4>Contacto</h4>
-          <ul>
-            <li>Email: info@nexosoft.com</li>
-            <li>Teléfono: +57 3000000001</li>
-            <li>Dirección: Sena</li>
-            <li>Bogotá, Colombia</li>
-          </ul>
+          
+          <div class="footer-bottom">
+            <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+            <span class="footer-made-with">
+              Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+            </span>
+          </div>
+        </footer>
+      </div>
+    
+      <!-- ==========================================================
+           MODAL DE PRODUCTO
+      ========================================================== -->
+      <div id="productModal" class="modal-overlay modal-hidden">
+        <div class="modal-card">
+    
+          <button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
+    
+          <div class="modal-content">
+            <div class="modal-image-wrapper">
+              <img id="modalImage" src="" alt="Imagen del producto">
+            </div>
+    
+            <div class="modal-info">
+              <span class="modal-tag" id="modalCategory">Categoría</span>
+              <h2 class="modal-title" id="modalTitle">Título del producto</h2>
+              <p class="modal-meta" id="modalMeta">Vendedor • Rating • Ventas</p>
+              <div class="modal-price" id="modalPrice">COP $0</div>
+              <h3 class="modal-section-title">Descripción</h3>
+              <p class="modal-desc" id="modalDescription"></p>
+    
+              <h3 class="modal-section-title">Características</h3>
+              <ul class="modal-features" id="modalFeatures"></ul>
+            </div>
+          </div>
+    
+          <div class="modal-footer">
+            <div class="modal-stock">
+              Disponibilidad:
+              <span class="badge-stock">
+                <span class="badge-dot"></span>
+                <span id="modalStockText">En stock</span>
+              </span>
+            </div>
+    
+            <button class="modal-btn-primary" type="button" id="modalAddCartBtn">
+              Agregar al carrito
+            </button>
+          </div>
+    
         </div>
       </div>
-
-      <div class="footer-bottom">
-        <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
-        <span class="footer-made-with">
-          Hecho con <span class="footer-heart">❤</span> para nuestros clientes
-        </span>
-      </div>
-    </footer>
-  </div>
-
-  <!-- ==========================================================
-       MODAL DE PRODUCTO
-  ========================================================== -->
-  <div id="productModal" class="modal-overlay modal-hidden">
-    <div class="modal-card">
-
-      <button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
-
-      <div class="modal-content">
-        <div class="modal-image-wrapper">
-          <img id="modalImage" src="" alt="Imagen del producto">
-        </div>
-
-        <div class="modal-info">
-          <span class="modal-tag" id="modalCategory">Categoría</span>
-          <h2 class="modal-title" id="modalTitle">Título del producto</h2>
-          <p class="modal-meta" id="modalMeta">Vendedor • Rating • Ventas</p>
-          <div class="modal-price" id="modalPrice">COP $0</div>
-          <h3 class="modal-section-title">Descripción</h3>
-          <p class="modal-desc" id="modalDescription"></p>
-
-          <h3 class="modal-section-title">Características</h3>
-          <ul class="modal-features" id="modalFeatures"></ul>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <div class="modal-stock">
-          Disponibilidad:
-          <span class="badge-stock">
-            <span class="badge-dot"></span>
-            <span id="modalStockText">En stock</span>
-          </span>
-        </div>
-
-        <button class="modal-btn-primary" type="button" id="modalAddCartBtn">
-          Agregar al carrito
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-
- <!-- ==========================================================
-    SISTEMA DE SESIÓN 
-========================================================== -->
-<script>
-  const loginBtn = document.getElementById("loginBtn");
-
-  // Verificar sesión
-  const sesionActiva = localStorage.getItem("sesionActiva") === "true";
-  const usuarioActual = JSON.parse(localStorage.getItem("usuarioActual"));
-
-  if (sesionActiva && usuarioActual) {
-    // Cambiar botón "Ingresar" → Nombre del usuario
-    loginBtn.textContent = usuarioActual.nombre;
-    loginBtn.href = "#";
-    loginBtn.classList.remove("btn-outline");
-    loginBtn.classList.add("btn-primary");
-
-    // Crear botón de Cerrar sesión
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Cerrar sesión";
-    logoutBtn.classList.add("btn-outline");
-    logoutBtn.style.marginLeft = "10px";
-
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("sesionActiva");
-      localStorage.removeItem("usuarioActual");
-      location.reload();
-    });
-
-    // Insertar botón al lado del nombre
-    loginBtn.parentNode.appendChild(logoutBtn);
-  }
-</script>
 
 </body>
 </html>

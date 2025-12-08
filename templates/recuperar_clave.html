@@ -48,7 +48,7 @@
           </p>
         </div>
 
-        <form id="recuperarForm" method="post" action="{% url 'recuperar_clave' %}">
+        <form id="recuperarForm" method="post" action="{% url 'recuperar_clave' %}" novalidate>
           {% csrf_token %}
           <div class="auth-body">
             <!-- CORREO -->
@@ -65,6 +65,7 @@
                 pattern="^[^@\s]+@(gmail\.com|hotmail\.com|outlook\.com|yahoo\.com)$"
                 title="Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo."
               />
+              <div class="field-error"></div>
             </div>
 
             <!-- NUEVA CONTRASEÑA -->
@@ -84,6 +85,7 @@
                 />
                 <span class="toggle-password" data-target="recPass1">👁</span>
               </div>
+              <div class="field-error"></div>
             </div>
 
             <!-- CONFIRMAR CONTRASEÑA -->
@@ -105,8 +107,7 @@
 
           <div class="auth-footer">
             <span class="auth-footer-text">
-              ¿Recordaste tu contraseña?
-              <a href="{% url 'login' %}" class="link-inline">Inicia sesión aquí</a>
+              <a href="{% url 'login' %}" class="link-inline">Volver al login</a>
             </span>
 
             <button type="submit" class="btn-primary">
@@ -166,19 +167,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function mostrarError(campo, mensaje) {
+    const grupo = campo.closest(".form-group");
+    if (!grupo) return;
+
     campo.classList.add("input-error");
-    let errorDiv = campo.parentElement.querySelector(".field-error");
+    let errorDiv = grupo.querySelector(".field-error");
     if (!errorDiv) {
       errorDiv = document.createElement("div");
       errorDiv.className = "field-error";
-      campo.parentElement.appendChild(errorDiv);
+      grupo.appendChild(errorDiv);
     }
     errorDiv.textContent = mensaje;
   }
 
   function limpiarError(campo) {
+    const grupo = campo.closest(".form-group");
+    if (!grupo) return;
+
     campo.classList.remove("input-error");
-    const errorDiv = campo.parentElement.querySelector(".field-error");
+    const errorDiv = grupo.querySelector(".field-error");
     if (errorDiv) errorDiv.textContent = "";
   }
 
@@ -186,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
     campo.setCustomValidity("");
     let mensaje = obtenerMensajeError(campo);
 
-    // Coincidencia de contraseñas
     if (!mensaje && campo.name === "password2") {
       const pass1 = form.querySelector('input[name="password"]');
       if (pass1 && campo.value !== pass1.value) {
@@ -225,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
     campo.addEventListener("input", () => validarCampo(campo));
   });
 
-  // Ojito mostrar/ocultar
   document.querySelectorAll(".toggle-password").forEach(btn => {
     btn.addEventListener("click", () => {
       const input = document.getElementById(btn.dataset.target);
@@ -235,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
 
 </body>
 </html>

@@ -164,6 +164,328 @@ def perfil_view(request):
     # 4) Si es GET, render normal
     return render(request, "perfil.html", {"usuario": usuario})
 
+def carrito_detalle(request):
+    """
+    Muestra el carrito del usuario logueado.
+    Si no tiene carrito, crea uno vacío.
+    También enriquece los items con info de precio actual
+    para poder mostrar si hubo cambios.
+    """
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para ver tu carrito.")
+        return redirect("login")
+
+    try:
+        carrito = mongo_service.obtener_o_crear_carrito_abierto(usuario_id)
+    except Exception as e:
+        print("ERROR al obtener carrito:", e)
+        messages.error(request, "No fue posible cargar tu carrito en este momento.")
+        return redirect("landing")
+
+        # Construir una lista de items “listos para la vista”
+    items_ui = []
+    for item in carrito.get("itemsCarrito", []):
+        id_producto = item.get("idProducto")
+        producto = None
+        precio_actual = None
+        precio_cambio = False
+        stock_actual = None
+        stock_minimo = None
+        stock_bajo = False
+
+        try:
+            producto = mongo_service.get_productos_collection().find_one({"_id": id_producto})
+        except Exception as e:
+            print("ERROR buscando producto de carrito:", e)
+
+        if producto:
+            inventario = producto.get("inventario", {})
+            precio_actual = inventario.get("precioVenta")
+            stock_actual = inventario.get("stockActual")
+            stock_minimo = inventario.get("stockMinimo")
+
+            if stock_actual is not None and stock_minimo is not None:
+                stock_bajo = stock_actual <= stock_minimo
+
+        precio_snapshot = item.get("precioUnitarioSnapshot")
+
+        if precio_actual is not None and precio_snapshot is not None:
+            precio_cambio = (precio_actual != precio_snapshot)
+
+        items_ui.append({
+            "idProducto": str(id_producto),
+            "nombreProducto": item.get("nombreProducto") or (producto or {}).get("nombreProducto", ""),
+            "cantidad": item.get("cantidad", 0),
+            "precio_snapshot": precio_snapshot,
+            "subtotal_snapshot": item.get("subtotalLineaSnapshot", 0),
+            "seleccionado": item.get("seleccionado", True),
+            "precio_actual": precio_actual,
+            "precio_cambio": precio_cambio,
+            "stock_actual": stock_actual,
+            "stock_minimo": stock_minimo,
+            "stock_bajo": stock_bajo,
+        })
+
+    # Flags globales para la vista
+    hay_precio_cambiado = any(
+        it.get("seleccionado") and it.get("precio_cambio")
+        for it in items_ui
+    )
+
+    hay_stock_bajo_seleccionado = any(
+        it.get("seleccionado") and it.get("stock_bajo")
+        for it in items_ui
+    )
+
+    contexto = {
+        "carrito": carrito,
+        "items": items_ui,
+        "hay_precio_cambiado": hay_precio_cambiado,
+        "hay_stock_bajo_seleccionado": hay_stock_bajo_seleccionado,
+    }
+
+    return render(request, "carrito.html", contexto)
+
+
+
+def carrito_agregar(request):
+    """
+    Agrega un producto al carrito del usuario.
+    Espera POST con:
+      - producto_id
+      - cantidad
+    """
+    if request.method != "POST":
+        return redirect("carrito")
+
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para agregar productos al carrito.")
+        return redirect("login")
+
+    producto_id = request.POST.get("producto_id", "").strip()
+    cantidad_str = request.POST.get("cantidad", "1").strip()
+
+    try:
+        cantidad = int(cantidad_str)
+    except ValueError:
+        messages.error(request, "La cantidad debe ser un número entero.")
+        return redirect("carrito")
+
+    try:
+        carrito = mongo_service.agregar_o_actualizar_item_carrito(
+            usuario_id,
+            producto_id,
+            cantidad
+        )
+        messages.success(request, "Producto agregado al carrito correctamente.")
+    except ValueError as ve:
+        messages.error(request, str(ve))
+    except errors.PyMongoError as e:
+        print("ERROR Mongo al agregar al carrito:", e)
+        messages.error(request, "Ocurrió un error al agregar el producto al carrito.")
+    except Exception as e:
+        print("ERROR inesperado al agregar al carrito:", e)
+        messages.error(request, "Ocurrió un error inesperado al agregar el producto al carrito.")
+
+    # Podrías redirigir a la página del producto o al carrito; por ahora al carrito:
+    return redirect("carrito")
+
+def carrito_actualizar_cantidad(request):
+    """
+    Actualiza la cantidad de un producto en el carrito.
+    Espera POST con:
+      - producto_id
+      - cantidad
+    Si cantidad = 0, elimina el ítem del carrito.
+    """
+    if request.method != "POST":
+        return redirect("carrito")
+
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para modificar tu carrito.")
+        return redirect("login")
+
+    producto_id = request.POST.get("producto_id", "").strip()
+    cantidad_str = request.POST.get("cantidad", "").strip()
+
+    try:
+        nueva_cantidad = int(cantidad_str)
+    except ValueError:
+        messages.error(request, "La cantidad debe ser un número entero.")
+        return redirect("carrito")
+
+    try:
+        carrito = mongo_service.actualizar_cantidad_item_carrito(
+            usuario_id,
+            producto_id,
+            nueva_cantidad
+        )
+        if nueva_cantidad == 0:
+            messages.success(request, "Producto eliminado del carrito.")
+        else:
+            messages.success(request, "Cantidad actualizada en el carrito.")
+    except ValueError as ve:
+        messages.error(request, str(ve))
+    except errors.PyMongoError as e:
+        print("ERROR Mongo al actualizar cantidad:", e)
+        messages.error(request, "Ocurrió un error al actualizar la cantidad.")
+    except Exception as e:
+        print("ERROR inesperado al actualizar cantidad:", e)
+        messages.error(request, "Ocurrió un error inesperado al actualizar el carrito.")
+
+    return redirect("carrito")
+
+def carrito_actualizar_seleccion(request):
+    """
+    Marca un ítem del carrito como seleccionado o no.
+    Espera POST con:
+      - producto_id
+      - seleccionado ( 'true' / 'false' )
+    """
+    if request.method != "POST":
+        return redirect("carrito")
+
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para modificar tu carrito.")
+        return redirect("login")
+
+    producto_id = request.POST.get("producto_id", "").strip()
+    seleccionado_str = request.POST.get("seleccionado", "true").strip().lower()
+    seleccionado = (seleccionado_str == "true")
+
+    try:
+        carrito = mongo_service.actualizar_seleccion_item_carrito(
+            usuario_id,
+            producto_id,
+            seleccionado
+        )
+        messages.success(request, "Carrito actualizado.")
+    except ValueError as ve:
+        messages.error(request, str(ve))
+    except errors.PyMongoError as e:
+        print("ERROR Mongo al actualizar selección:", e)
+        messages.error(request, "Ocurrió un error al actualizar el carrito.")
+    except Exception as e:
+        print("ERROR inesperado al actualizar selección:", e)
+        messages.error(request, "Ocurrió un error inesperado al actualizar el carrito.")
+
+    return redirect("carrito")
+
+from bson import ObjectId
+
+def pedido_detalle(request, pedido_id: str):
+    """
+    Muestra el detalle de un pedido específico del usuario.
+    """
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para ver tus pedidos.")
+        return redirect("login")
+
+    try:
+        id_pedido = ObjectId(pedido_id)
+        id_usuario = ObjectId(usuario_id)
+    except Exception:
+        messages.error(request, "Identificador de pedido no válido.")
+        return redirect("landing")
+
+    pedidos_col = mongo_service.get_pedidos_collection()
+
+    try:
+        pedido = pedidos_col.find_one({"_id": id_pedido})
+    except Exception as e:
+        print("ERROR al buscar pedido:", e)
+        messages.error(request, "No fue posible cargar el pedido.")
+        return redirect("landing")
+
+    if not pedido:
+        messages.error(request, "El pedido no existe.")
+        return redirect("landing")
+
+    if pedido.get("idUsuarioCliente") != id_usuario:
+        messages.error(request, "No tienes permiso para ver este pedido.")
+        return redirect("landing")
+
+    items_ui = []
+    for it in pedido.get("itemsPedido", []):
+        items_ui.append({
+        "nombreProducto": it.get("nombreProducto", ""),
+        "cantidad": it.get("cantidad", 0),
+        "precioUnitario": it.get("precioUnitario", 0),
+        "subtotalLinea": it.get("subtotalLinea", 0),
+    })
+
+    pedido_id_str = str(pedido.get("_id"))  # 👈 NUEVO
+
+    contexto = {
+        "pedido": pedido,
+        "items": items_ui,
+        "pedido_id": pedido_id_str,          # 👈 NUEVO
+}
+    return render(request, "pedido_detalle.html", contexto)
+
+def carrito_checkout(request):
+    """
+    Convierte el carrito actual del usuario en un Pedido.
+    Usa solo los items seleccionados.
+    """
+    if request.method != "POST":
+        return redirect("carrito")
+
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para finalizar tu compra.")
+        return redirect("login")
+
+    # Por ahora tomamos estos valores del formulario o ponemos defaults:
+    metodo_entrega = request.POST.get("metodo_entrega", "domicilio")
+    metodo_pago = request.POST.get("metodo_pago", "efectivo")
+    costo_envio_str = request.POST.get("costo_envio", "0")
+
+    try:
+        costo_envio = float(costo_envio_str)
+    except ValueError:
+        costo_envio = 0.0
+
+    try:
+        pedido = mongo_service.crear_pedido_desde_carrito(
+            usuario_id,
+            metodo_entrega,
+            metodo_pago,
+            costo_envio
+        )
+        pedido_id_str = str(pedido.get("_id"))
+        messages.success(
+            request,
+            "Pedido creado correctamente."
+        )
+        return redirect("pedido_detalle", pedido_id=pedido_id_str)
+
+
+    except ValueError as ve:
+        # Errores de validación de negocio (sin stock, sin items seleccionados, etc.)
+        messages.error(request, str(ve))
+        return redirect("carrito")
+
+    except errors.PyMongoError as e:
+        print("ERROR Mongo al crear pedido desde carrito:", e)
+        messages.error(
+            request,
+            "Ocurrió un error al crear el pedido. Intenta de nuevo más tarde."
+        )
+        return redirect("carrito")
+
+    except Exception as e:
+        print("ERROR inesperado en carrito_checkout:", e)
+        messages.error(
+            request,
+            "Ocurrió un error inesperado al procesar tu compra."
+        )
+        return redirect("carrito")
 
 def register_view(request):
     if request.method == "POST":

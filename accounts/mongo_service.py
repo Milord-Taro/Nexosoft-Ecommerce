@@ -199,3 +199,466 @@ def actualizar_password_por_correo(correo: str, nueva_password_plana: str) -> bo
         {"$set": {"contraseñaHash": hash_nuevo}}
     )
     return result.modified_count > 0
+
+def get_productos_collection():
+    """
+    Devuelve la colección Productos.
+    """
+    db = get_db()
+    return db["Productos"]
+
+def get_carritos_collection():
+    """
+    Devuelve la colección Carritos.
+    """
+    db = get_db()
+    return db["Carritos"]
+
+def get_pedidos_collection():
+    """
+    Devuelve la colección Pedidos.
+    """
+    db = get_db()
+    return db["Pedidos"]
+
+
+def _recalcular_totales_carrito(carrito: dict) -> dict:
+    """
+    Recalcula subtotalCarritoSnapshot, subtotalSeleccionadoSnapshot
+    y totalSeleccionadoSnapshot en el documento de carrito.
+    NO guarda en BD, solo modifica el dict en memoria.
+    """
+    subtotal_total = 0
+    subtotal_seleccionado = 0
+
+    for item in carrito.get("itemsCarrito", []):
+        subtotal_linea = item.get("subtotalLineaSnapshot", 0)
+        subtotal_total += subtotal_linea
+        if item.get("seleccionado", True):
+            subtotal_seleccionado += subtotal_linea
+
+    carrito["subtotalCarritoSnapshot"] = subtotal_total
+    carrito["subtotalSeleccionadoSnapshot"] = subtotal_seleccionado
+    # Por ahora el total es igual al subtotal seleccionado
+    carrito["totalSeleccionadoSnapshot"] = subtotal_seleccionado
+
+    carrito["fechaActualizacionCarrito"] = datetime.now(timezone.utc)
+    return carrito
+
+def obtener_o_crear_carrito_abierto(id_usuario_str: str) -> dict:
+    """
+    Obtiene el carrito 'abierto' de un usuario.
+    Si no existe, crea uno nuevo vacío.
+    Devuelve el documento de carrito (dict).
+    """
+    carritos = get_carritos_collection()
+
+    try:
+        id_usuario = ObjectId(id_usuario_str)
+    except Exception:
+        raise ValueError("id_usuario_str no es un ObjectId válido")
+
+    carrito = carritos.find_one({
+        "idUsuarioCliente": id_usuario,
+        "estadoCarrito": "abierto"
+    })
+
+    if carrito:
+        return carrito
+
+    # Crear uno nuevo
+    nuevo = {
+        "idUsuarioCliente": id_usuario,
+        "estadoCarrito": "abierto",
+        "fechaCreacionCarrito": datetime.now(timezone.utc),
+        "fechaActualizacionCarrito": datetime.now(timezone.utc),
+        "itemsCarrito": [],
+        "subtotalCarritoSnapshot": 0,
+        "subtotalSeleccionadoSnapshot": 0,
+        "totalSeleccionadoSnapshot": 0
+    }
+
+    result = carritos.insert_one(nuevo)
+    nuevo["_id"] = result.inserted_id
+    return nuevo
+
+def agregar_o_actualizar_item_carrito(
+    id_usuario_str: str,
+    id_producto_str: str,
+    cantidad: int
+) -> dict:
+    """
+    Agrega un producto al carrito del usuario o actualiza su cantidad.
+    - Verifica que el producto exista y esté 'activo'.
+    - Verifica que haya stock suficiente (inventario.stockActual).
+    - Si el ítem ya existe en el carrito, suma la cantidad.
+    - Siempre marca seleccionado=True cuando se agrega/actualiza.
+    Devuelve el carrito actualizado.
+    Lanza ValueError con mensajes claros si algo falla.
+    """
+    if cantidad <= 0:
+        raise ValueError("La cantidad debe ser mayor a 0")
+
+    productos = get_productos_collection()
+    carritos = get_carritos_collection()
+
+    # Convertir ids
+    try:
+        id_usuario = ObjectId(id_usuario_str)
+        id_producto = ObjectId(id_producto_str)
+    except Exception:
+        raise ValueError("id_usuario_str o id_producto_str no son ObjectId válidos")
+
+    # 1. Buscar producto
+    producto = productos.find_one({"_id": id_producto})
+    if not producto:
+        raise ValueError("El producto no existe")
+
+    if producto.get("estadoProducto") != "activo":
+        raise ValueError("El producto no está activo en el catálogo")
+
+    inventario = producto.get("inventario", {})
+    stock_actual = inventario.get("stockActual", 0)
+
+    # 2. Obtener o crear carrito
+    carrito = obtener_o_crear_carrito_abierto(id_usuario_str)
+
+    # 3. Buscar si ya existe ítem para ese producto
+    items = carrito.get("itemsCarrito", [])
+    item_existente = None
+    for item in items:
+        if item.get("idProducto") == id_producto:
+            item_existente = item
+            break
+
+    # 4. Calcular nueva cantidad
+    if item_existente:
+        nueva_cantidad = item_existente["cantidad"] + cantidad
+    else:
+        nueva_cantidad = cantidad
+
+    if nueva_cantidad > stock_actual:
+        raise ValueError(
+            f"No hay stock suficiente. Stock disponible: {stock_actual}, "
+            f"cantidad solicitada total en carrito: {nueva_cantidad}"
+        )
+
+    precio_unitario = inventario.get("precioVenta")
+    if precio_unitario is None:
+        raise ValueError("El producto no tiene precioVenta definido en inventario")
+
+    subtotal_linea = nueva_cantidad * precio_unitario
+
+    # 5. Actualizar/crear ítem
+    if item_existente:
+        item_existente["cantidad"] = nueva_cantidad
+        item_existente["precioUnitarioSnapshot"] = precio_unitario
+        item_existente["subtotalLineaSnapshot"] = subtotal_linea
+        item_existente["seleccionado"] = True
+    else:
+        nuevo_item = {
+            "_idItemCarrito": ObjectId(),
+            "idProducto": id_producto,
+            "nombreProducto": producto.get("nombreProducto", ""),
+            "cantidad": nueva_cantidad,
+            "precioUnitarioSnapshot": precio_unitario,
+            "subtotalLineaSnapshot": subtotal_linea,
+            "seleccionado": True
+        }
+        items.append(nuevo_item)
+        carrito["itemsCarrito"] = items
+
+    # 6. Recalcular totales
+    carrito = _recalcular_totales_carrito(carrito)
+
+    # 7. Guardar en BD y devolver
+    carritos.update_one(
+        {"_id": carrito["_id"]},
+        {"$set": {
+            "itemsCarrito": carrito["itemsCarrito"],
+            "subtotalCarritoSnapshot": carrito["subtotalCarritoSnapshot"],
+            "subtotalSeleccionadoSnapshot": carrito["subtotalSeleccionadoSnapshot"],
+            "totalSeleccionadoSnapshot": carrito["totalSeleccionadoSnapshot"],
+            "fechaActualizacionCarrito": carrito["fechaActualizacionCarrito"],
+        }}
+    )
+
+    return carrito
+
+def actualizar_cantidad_item_carrito(
+    id_usuario_str: str,
+    id_producto_str: str,
+    nueva_cantidad: int
+) -> dict:
+    """
+    Actualiza la cantidad de un producto en el carrito.
+    - Si nueva_cantidad == 0 → elimina el ítem del carrito.
+    - Verifica stock antes de aplicar cambio.
+    Devuelve el carrito actualizado.
+    """
+    productos = get_productos_collection()
+    carritos = get_carritos_collection()
+
+    try:
+        id_usuario = ObjectId(id_usuario_str)
+        id_producto = ObjectId(id_producto_str)
+    except Exception:
+        raise ValueError("id_usuario_str o id_producto_str no son ObjectId válidos")
+
+    carrito = carritos.find_one({
+        "idUsuarioCliente": id_usuario,
+        "estadoCarrito": "abierto"
+    })
+
+    if not carrito:
+        raise ValueError("El usuario no tiene un carrito abierto")
+
+    items = carrito.get("itemsCarrito", [])
+    item_encontrado = None
+    for item in items:
+        if item.get("idProducto") == id_producto:
+            item_encontrado = item
+            break
+
+    if not item_encontrado:
+        raise ValueError("El producto no está en el carrito")
+
+    if nueva_cantidad == 0:
+        # Eliminar ítem
+        items = [it for it in items if it.get("idProducto") != id_producto]
+        carrito["itemsCarrito"] = items
+    else:
+        # Verificar stock
+        producto = productos.find_one({"_id": id_producto})
+        if not producto:
+            raise ValueError("El producto no existe")
+
+        inventario = producto.get("inventario", {})
+        stock_actual = inventario.get("stockActual", 0)
+        if nueva_cantidad > stock_actual:
+            raise ValueError(
+                f"No hay stock suficiente. Stock disponible: {stock_actual}, "
+                f"cantidad solicitada: {nueva_cantidad}"
+            )
+
+        precio_unitario = inventario.get("precioVenta")
+        if precio_unitario is None:
+            raise ValueError("El producto no tiene precioVenta definido en inventario")
+
+        item_encontrado["cantidad"] = nueva_cantidad
+        item_encontrado["precioUnitarioSnapshot"] = precio_unitario
+        item_encontrado["subtotalLineaSnapshot"] = nueva_cantidad * precio_unitario
+
+    carrito = _recalcular_totales_carrito(carrito)
+
+    carritos.update_one(
+        {"_id": carrito["_id"]},
+        {"$set": {
+            "itemsCarrito": carrito["itemsCarrito"],
+            "subtotalCarritoSnapshot": carrito["subtotalCarritoSnapshot"],
+            "subtotalSeleccionadoSnapshot": carrito["subtotalSeleccionadoSnapshot"],
+            "totalSeleccionadoSnapshot": carrito["totalSeleccionadoSnapshot"],
+            "fechaActualizacionCarrito": carrito["fechaActualizacionCarrito"],
+        }}
+    )
+
+    return carrito
+
+def actualizar_seleccion_item_carrito(
+    id_usuario_str: str,
+    id_producto_str: str,
+    seleccionado: bool
+) -> dict:
+    """
+    Marca un ítem del carrito como seleccionado o no seleccionado.
+    Esto afecta subtotalSeleccionadoSnapshot y totalSeleccionadoSnapshot.
+    """
+    carritos = get_carritos_collection()
+
+    try:
+        id_usuario = ObjectId(id_usuario_str)
+        id_producto = ObjectId(id_producto_str)
+    except Exception:
+        raise ValueError("id_usuario_str o id_producto_str no son ObjectId válidos")
+
+    carrito = carritos.find_one({
+        "idUsuarioCliente": id_usuario,
+        "estadoCarrito": "abierto"
+    })
+
+    if not carrito:
+        raise ValueError("El usuario no tiene un carrito abierto")
+
+    items = carrito.get("itemsCarrito", [])
+    item_encontrado = None
+    for item in items:
+        if item.get("idProducto") == id_producto:
+            item_encontrado = item
+            break
+
+    if not item_encontrado:
+        raise ValueError("El producto no está en el carrito")
+
+    item_encontrado["seleccionado"] = bool(seleccionado)
+
+    carrito = _recalcular_totales_carrito(carrito)
+
+    carritos.update_one(
+        {"_id": carrito["_id"]},
+        {"$set": {
+            "itemsCarrito": carrito["itemsCarrito"],
+            "subtotalCarritoSnapshot": carrito["subtotalCarritoSnapshot"],
+            "subtotalSeleccionadoSnapshot": carrito["subtotalSeleccionadoSnapshot"],
+            "totalSeleccionadoSnapshot": carrito["totalSeleccionadoSnapshot"],
+            "fechaActualizacionCarrito": carrito["fechaActualizacionCarrito"],
+        }}
+    )
+
+    return carrito
+
+def crear_pedido_desde_carrito(
+    id_usuario_str: str,
+    metodo_entrega: str,
+    metodo_pago: str,
+    costo_envio: float = 0.0
+) -> dict:
+    """
+    Crea un Pedido a partir del carrito ABIERTO del usuario.
+    - Usa SOLO los items seleccionados (seleccionado=True).
+    - Relee productos para usar precioActual (inventario.precioVenta).
+    - Verifica stock antes de descontar.
+    - Actualiza inventario de Productos.
+    - Marca el carrito como 'convertido'.
+
+    Devuelve el documento de Pedido creado.
+    Lanza ValueError si:
+      - No hay carrito.
+      - No hay items seleccionados.
+      - Falta stock o producto inactivo.
+    """
+    from bson import ObjectId
+    from datetime import datetime, timezone
+
+    productos_col = get_productos_collection()
+    carritos_col = get_carritos_collection()
+    pedidos_col = get_pedidos_collection()
+
+    try:
+        id_usuario = ObjectId(id_usuario_str)
+    except Exception:
+        raise ValueError("id_usuario_str no es un ObjectId válido")
+
+    # 1. Obtener carrito ABIERTO
+    carrito = carritos_col.find_one({
+        "idUsuarioCliente": id_usuario,
+        "estadoCarrito": "abierto"
+    })
+
+    if not carrito:
+        raise ValueError("El usuario no tiene un carrito abierto")
+
+    items_carrito = carrito.get("itemsCarrito", [])
+
+    # 2. Filtrar SOLO items seleccionados y con cantidad > 0
+    items_seleccionados = [
+        item for item in items_carrito
+        if item.get("seleccionado", True) and item.get("cantidad", 0) > 0
+    ]
+
+    if not items_seleccionados:
+        raise ValueError("No hay productos seleccionados para crear el pedido.")
+
+    # 3. Validar productos, stock y armar itemsPedido
+    items_pedido = []
+    subtotal_pedido = 0.0
+    productos_a_actualizar_stock = []  # (idProducto, cantidad)
+
+    for item in items_seleccionados:
+        id_producto = item.get("idProducto")
+        cantidad = item.get("cantidad", 0)
+
+        if not id_producto or cantidad <= 0:
+            continue
+
+        producto = productos_col.find_one({"_id": id_producto})
+        if not producto:
+            raise ValueError("Uno de los productos del carrito ya no existe.")
+
+        if producto.get("estadoProducto") != "activo":
+            raise ValueError(
+                f"El producto '{producto.get('nombreProducto', '')}' ya no está activo."
+            )
+
+        inventario = producto.get("inventario", {})
+        stock_actual = inventario.get("stockActual", 0)
+        precio_actual = inventario.get("precioVenta")
+
+        if precio_actual is None:
+            raise ValueError(
+                f"El producto '{producto.get('nombreProducto', '')}' no tiene precio definido."
+            )
+
+        if cantidad > stock_actual:
+            raise ValueError(
+                f"No hay stock suficiente para '{producto.get('nombreProducto', '')}'. "
+                f"Disponible: {stock_actual}, solicitado: {cantidad}."
+            )
+
+        subtotal_linea = float(cantidad * precio_actual)
+        subtotal_pedido += subtotal_linea
+
+        items_pedido.append({
+            "idProducto": id_producto,
+            "nombreProducto": producto.get("nombreProducto", ""),
+            "cantidad": int(cantidad),
+            "precioUnitario": float(precio_actual),
+            "subtotalLinea": subtotal_linea
+        })
+
+        productos_a_actualizar_stock.append((id_producto, cantidad))
+
+    # 4. Calcular totales
+    subtotal_pedido = float(subtotal_pedido)
+    costo_envio = float(costo_envio)
+    total_pedido = subtotal_pedido + costo_envio
+
+    # 5. Construir documento Pedido (siguiendo tu $jsonSchema)
+    ahora = datetime.now(timezone.utc)
+
+    pedido_doc = {
+        "idUsuarioCliente": id_usuario,
+        "itemsPedido": items_pedido,
+        "fechaCreacionPedido": ahora,
+        "estadoPedido": "pendiente",  # luego lo cambiarás a 'pagado', etc.
+        "subtotalPedido": subtotal_pedido,
+        "costoEnvioPedido": costo_envio,
+        "totalPedido": total_pedido,
+        "metodoEntrega": metodo_entrega,  # 'domicilio' | 'contraEntrega'
+        "metodoPago": metodo_pago        # 'efectivo', 'tarjetaCredito', etc.
+    }
+
+    # 6. Insertar Pedido
+    result = pedidos_col.insert_one(pedido_doc)
+    pedido_doc["_id"] = result.inserted_id
+
+    # 7. Actualizar stock de productos
+    for id_producto, cantidad in productos_a_actualizar_stock:
+        productos_col.update_one(
+            {"_id": id_producto},
+            {"$inc": {"inventario.stockActual": -int(cantidad)}}
+        )
+
+    # 8. Marcar carrito como 'convertido'
+    carritos_col.update_one(
+        {"_id": carrito["_id"]},
+        {
+            "$set": {
+                "estadoCarrito": "convertido",
+                "fechaActualizacionCarrito": ahora
+            }
+        }
+    )
+
+    return pedido_doc
+
+

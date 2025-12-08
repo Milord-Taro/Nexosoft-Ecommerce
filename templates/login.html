@@ -86,30 +86,19 @@
             
             <div class="auth-footer">
               <div class="auth-footer-text">
+                  ¿Aún no tienes cuenta?
+                  <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>                
+              </div>
+
                 <a href="{% url 'recuperar_clave' %}" class="link-inline">
                   ¿Olvidaste tu contraseña?
                 </a>
-              </div>
-              <span class="auth-footer-text">
-                ¿Aún no tienes cuenta?
-                <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>
-              </span>
-            
-              <button class="btn-primary" type="submit">
-                Iniciar sesión
-              </button>
-            </div>
-            
-            <div class="auth-footer">
-              <span class="auth-footer-text">
-                ¿Aún no tienes cuenta?
-                <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>
-              </span>
 
               <button class="btn-primary" type="submit">
                 Iniciar sesión
               </button>
             </div>
+            
           </form>
 
         </article>

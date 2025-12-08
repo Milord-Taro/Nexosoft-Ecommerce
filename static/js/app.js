@@ -312,6 +312,16 @@ modal.addEventListener("click", (e) => {
   if (e.target === modal) closeModal();
 });
 
+const modalAddCartBtn = document.getElementById("modalAddCartBtn");
+
+if (modalAddCartBtn) {
+  modalAddCartBtn.addEventListener("click", () => {
+    addToCart();
+    closeModal();
+  });
+}
+
+
 // ============================================================
 // 6. EVENTOS EN TARJETAS (delegación)
 // ============================================================

@@ -52,7 +52,8 @@
             </p>
           </div>
 
-          <form id="registroForm" method="post" action="{% url 'registro' %}">
+          <form id="registroForm" method="post" action="{% url 'registro' %}" novalidate>
+
             {% csrf_token %}
 
             <div class="auth-body auth-body-grid">
@@ -226,24 +227,30 @@
   </div>
 
   <!-- // Validación de coincidencia de contraseñas en tiempo real -->
-  <script>
-  const form = document.querySelector("form");
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("registroForm");
+  if (!form) return;
+
   const pass1 = document.getElementById("regPass1");
   const pass2 = document.getElementById("regPass2");
-  const strengthBar = document.getElementById("passwordStrengthBar");
+  const strengthBar  = document.getElementById("passwordStrengthBar");
   const strengthText = document.getElementById("passwordStrengthText");
-  
+  const campos = form.querySelectorAll("input, select");
+
+  // ─────────────────────────────────────────────
+  // Fuerza de contraseña
+  // ─────────────────────────────────────────────
   function calcularNivel(password) {
     let nivel = 0;
-
-    if (password.length >= 8) nivel++;                        // longitud mínima
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) nivel++; // mayúsculas + minúsculas
-    if (/\d/.test(password)) nivel++;                        // números
-    if (/[^A-Za-z0-9]/.test(password)) nivel++;              // símbolos
-
+    if (password.length >= 8) nivel++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) nivel++;
+    if (/\d/.test(password)) nivel++;
+    if (/[^A-Za-z0-9]/.test(password)) nivel++;
     return nivel;
   }
-  
+
   function actualizarFuerza() {
     const pwd = pass1.value;
     const nivel = calcularNivel(pwd);
@@ -272,64 +279,13 @@
     }
   }
 
-  function validarPasswords() {
-    // Reglas mínimas de seguridad
-    const pwd = pass1.value;
-    const nivel = calcularNivel(pwd);
-
-    if (nivel < 3) {
-      pass1.setCustomValidity(
-        "La contraseña debe tener al menos 8 caracteres, mayúsculas, minúsculas, números y algún símbolo."
-      );
-    } else {
-      pass1.setCustomValidity("");
-    }
-
-    // Coincidencia
-    if (pass1.value !== pass2.value) {
-      pass2.setCustomValidity("Las contraseñas no coinciden.");
-    } else {
-      pass2.setCustomValidity("");
-    }
-  }
-
-  pass1.addEventListener("input", () => {
-    actualizarFuerza();
-    validarPasswords();
-  });
-
-  pass2.addEventListener("input", validarPasswords);
-
-  form.addEventListener("submit", function (event) {
-    validarPasswords();
-    if (!form.checkValidity()) {
-      event.preventDefault();
-      form.reportValidity();
-    }
-  });
-  
-  // Mostrar/ocultar contraseñas
-  document.querySelectorAll(".toggle-password").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const input = document.getElementById(btn.dataset.target);
-      if (!input) return;
-      input.type = input.type === "password" ? "text" : "password";
-    });
-  });
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("registroForm");
-  if (!form) return;
-
-  const campos = form.querySelectorAll("input, select");
-
+  // ─────────────────────────────────────────────
+  // Mensajes de error debajo del campo
+  // ─────────────────────────────────────────────
   function obtenerMensajeError(campo) {
     const v = campo.validity;
     const name = campo.name;
 
-    // 1) Campo vacío
     if (v.valueMissing) {
       switch (name) {
         case "nombres":              return "Ingresa tus nombres.";
@@ -344,12 +300,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 2) Tipo email incorrecto
     if (v.typeMismatch && campo.type === "email") {
       return "Ingresa un correo electrónico válido.";
     }
 
-    // 3) Longitud mínima / máxima
     if (v.tooShort || v.tooLong) {
       switch (name) {
         case "nombres":
@@ -366,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 4) Pattern / regex del input
     if (v.patternMismatch) {
       switch (name) {
         case "nombres":
@@ -383,42 +336,49 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 5) Todo bien → sin error
     return "";
   }
 
   function mostrarError(campo, mensaje) {
-    // Borde rojo
+    const grupo = campo.closest(".form-group");
+    if (!grupo) return;
+
     campo.classList.add("input-error");
 
-    // Contenedor de error en el mismo bloque del input
-    let errorDiv = campo.parentElement.querySelector(".field-error");
+    let errorDiv = grupo.querySelector(".field-error");
     if (!errorDiv) {
       errorDiv = document.createElement("div");
       errorDiv.className = "field-error";
-      campo.parentElement.appendChild(errorDiv);
+      grupo.appendChild(errorDiv);
     }
     errorDiv.textContent = mensaje;
   }
 
   function limpiarError(campo) {
+    const grupo = campo.closest(".form-group");
+    if (!grupo) return;
+
     campo.classList.remove("input-error");
-    const errorDiv = campo.parentElement.querySelector(".field-error");
-    if (errorDiv) {
-      errorDiv.textContent = "";
-    }
+    const errorDiv = grupo.querySelector(".field-error");
+    if (errorDiv) errorDiv.textContent = "";
   }
 
   function validarCampo(campo) {
-    // limpiamos cualquier customValidity para que HTML5 no muestre globos
     campo.setCustomValidity("");
-
     let mensaje = obtenerMensajeError(campo);
 
-    // Validación extra: contraseñas iguales
+    // Reglas mínimas adicionales para password
+    if (!mensaje && campo.name === "password") {
+      const pwd = campo.value;
+      const nivel = calcularNivel(pwd);
+      if (nivel < 3) {
+        mensaje = "La contraseña debe tener al menos 8 caracteres, mayúsculas, minúsculas, números y algún símbolo.";
+      }
+    }
+
+    // Coincidencia de contraseñas
     if (!mensaje && campo.name === "password2") {
-      const pass1 = form.querySelector('input[name="password"]');
-      if (pass1 && campo.value !== pass1.value) {
+      if (pass1.value !== pass2.value) {
         mensaje = "Las contraseñas no coinciden.";
       }
     }
@@ -432,35 +392,49 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Validar al enviar
-  form.addEventListener("submit", function (e) {
-    let formularioValido = true;
-    let primerInvalido = null;
+  // Submit → validar todo y mostrar errores debajo del campo
+  form.addEventListener("submit", (e) => {
+    let valido = true;
+    let primero = null;
 
     campos.forEach(campo => {
-      const esValido = validarCampo(campo);
-      if (!esValido && !primerInvalido) {
-        primerInvalido = campo;
-        formularioValido = false;
+      const ok = validarCampo(campo);
+      if (!ok && !primero) {
+        primero = campo;
+        valido = false;
       }
     });
 
-    if (!formularioValido) {
+    if (!valido) {
       e.preventDefault();
-      if (primerInvalido) {
-        primerInvalido.focus();
-      }
+      if (primero) primero.focus();
     }
   });
 
-  // Validar en tiempo real mientras escribe
+  // Validación en tiempo real
   campos.forEach(campo => {
     campo.addEventListener("input", () => {
       validarCampo(campo);
+      if (campo === pass1) {
+        actualizarFuerza();
+      }
+    });
+  });
+
+  // Inicializar barra de fuerza vacía
+  actualizarFuerza();
+
+  // Ojitos
+  document.querySelectorAll(".toggle-password").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
     });
   });
 });
 </script>
+
 
 </body>
 </html>
