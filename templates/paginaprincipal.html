@@ -34,15 +34,9 @@
 
       <div class="header-actions">
         <!-- Carrito → demo 500 -->
-        <a
-          href="{% url 'demo_500' %}"
-          class="cart-btn"
-          id="cartBtn"
-          title="Simular error 500"
-        >
+
           🛒
           <span id="cartCount" class="cart-count">0</span>
-        </a>
       
         {% if request.session.usuario_id %}
           <span class="user-greeting">
@@ -62,11 +56,7 @@
             Ingresar
           </a>
         {% endif %}
-      
-        <!-- Botón Vender → demo 404 -->
-        <a href="{% url 'demo_404' %}" class="btn-primary" title="Simular error 404">
-          Vender
-        </a>
+
       </div>
     </header>
 
@@ -120,6 +110,9 @@
             <li>Política de Privacidad</li>
             <li>Preguntas Frecuentes</li>
             <li>PQR - Peticiones, Quejas y Reclamos</li>
+            <!-- 👇 DEMOS DE ERRORES -->
+            <li><a href="{% url 'demo_404' %}">Error 404</a></li>
+            <li><a href="{% url 'demo_500' %}">Error 500</a></li>
           </ul>
         </div>
 

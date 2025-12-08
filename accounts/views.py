@@ -44,6 +44,46 @@ def logout_view(request):
     messages.info(request, "Has cerrado sesión correctamente.")
     return redirect("landing")
 
+def recuperar_clave_view(request):
+    """
+    Flujo sencillo de recuperación de contraseña:
+    - El usuario ingresa su correo, nueva contraseña y confirmación.
+    - Si el correo existe y las contraseñas coinciden, se actualiza el hash.
+    """
+    if request.method == "POST":
+        correo = request.POST.get("correoElectronico", "").strip().lower()
+        password = request.POST.get("password", "")
+        password2 = request.POST.get("password2", "")
+
+        # Validaciones básicas
+        if not correo or not password or not password2:
+            messages.error(request, "Todos los campos son obligatorios.")
+            return render(request, "recuperar_clave.html")
+
+        if password != password2:
+            messages.error(request, "Las contraseñas no coinciden.")
+            return render(request, "recuperar_clave.html")
+
+        usuario = mongo_service.buscar_usuario_por_correo(correo)
+        if not usuario:
+            # Mensaje genérico para no revelar si el correo existe o no
+            messages.error(request, "No se encontró una cuenta asociada a ese correo.")
+            return render(request, "recuperar_clave.html")
+
+        ok = mongo_service.actualizar_password_por_correo(correo, password)
+        if not ok:
+            messages.error(request, "No fue posible actualizar la contraseña. Intenta de nuevo.")
+            return render(request, "recuperar_clave.html")
+
+        messages.success(
+            request,
+            "Tu contraseña se ha actualizado correctamente. Ahora puedes iniciar sesión."
+        )
+        return redirect("login")
+
+    # GET
+    return render(request, "recuperar_clave.html")
+
 
 def perfil_view(request):
     # 1) Verificar que haya sesión

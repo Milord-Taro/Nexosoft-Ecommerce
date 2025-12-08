@@ -1,0 +1,240 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nexosoft – Recuperar contraseña</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+
+<body>
+<div class="app-wrapper">
+
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="brand">
+      <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+    </div>
+
+    <div class="header-actions">
+      <a href="{% url 'landing' %}" class="btn-outline">Volver a la tienda</a>
+      <a href="{% url 'login' %}" class="btn-primary">Iniciar sesión</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- MENSAJES -->
+    {% if messages %}
+    <div class="auth-messages">
+      {% for message in messages %}
+      <div class="auth-message {{ message.tags }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="auth-wrapper">
+      <article class="auth-card">
+
+        <div class="auth-header">
+          <h1 class="auth-title">Recuperar contraseña</h1>
+          <p class="auth-subtitle">
+            Ingresa tu correo y una nueva contraseña para tu cuenta de Nexosoft.
+          </p>
+        </div>
+
+        <form id="recuperarForm" method="post" action="{% url 'recuperar_clave' %}">
+          {% csrf_token %}
+          <div class="auth-body">
+            <!-- CORREO -->
+            <div class="form-group">
+              <label for="recEmail">Correo electrónico</label>
+              <input
+                id="recEmail"
+                name="correoElectronico"
+                type="email"
+                class="form-input"
+                placeholder="correo@gmail.com"
+                required
+                maxlength="60"
+                pattern="^[^@\s]+@(gmail\.com|hotmail\.com|outlook\.com|yahoo\.com)$"
+                title="Solo se permiten correos de Gmail, Hotmail, Outlook o Yahoo."
+              />
+            </div>
+
+            <!-- NUEVA CONTRASEÑA -->
+            <div class="form-group">
+              <label for="recPass1">Nueva contraseña</label>
+              <div class="password-wrapper">
+                <input
+                  id="recPass1"
+                  name="password"
+                  type="password"
+                  class="form-input"
+                  placeholder="••••••••"
+                  required
+                  minlength="8"
+                  maxlength="32"
+                  title="Debe tener entre 8 y 32 caracteres, con mayúsculas, minúsculas, números y símbolos."
+                />
+                <span class="toggle-password" data-target="recPass1">👁</span>
+              </div>
+            </div>
+
+            <!-- CONFIRMAR CONTRASEÑA -->
+            <div class="form-group">
+              <label for="recPass2">Confirmar contraseña</label>
+              <div class="password-wrapper">
+                <input
+                  id="recPass2"
+                  name="password2"
+                  type="password"
+                  class="form-input"
+                  placeholder="Repite tu contraseña"
+                  required
+                />
+                <span class="toggle-password" data-target="recPass2">👁</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-footer">
+            <span class="auth-footer-text">
+              ¿Recordaste tu contraseña?
+              <a href="{% url 'login' %}" class="link-inline">Inicia sesión aquí</a>
+            </span>
+
+            <button type="submit" class="btn-primary">
+              Actualizar contraseña
+            </button>
+          </div>
+        </form>
+
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-bottom">
+      <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+      <span class="footer-made-with">
+        Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+      </span>
+    </div>
+  </footer>
+</div>
+
+<!-- VALIDACIÓN FRONTEND BÁSICA + OJITO -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("recuperarForm");
+  if (!form) return;
+
+  const campos = form.querySelectorAll("input[required]");
+
+  function obtenerMensajeError(campo) {
+    const v = campo.validity;
+    const name = campo.name;
+
+    if (v.valueMissing) {
+      switch (name) {
+        case "correoElectronico": return "Ingresa tu correo electrónico.";
+        case "password":         return "Ingresa una nueva contraseña.";
+        case "password2":        return "Repite tu nueva contraseña.";
+        default:                 return "Este campo es obligatorio.";
+      }
+    }
+
+    if (v.typeMismatch && campo.type === "email") {
+      return "Ingresa un correo electrónico válido.";
+    }
+
+    if (v.patternMismatch && name === "correoElectronico") {
+      return "Ingresa un correo válido (gmail, hotmail, outlook o yahoo).";
+    }
+
+    if ((v.tooShort || v.tooLong) && name === "password") {
+      return "La contraseña debe tener entre 8 y 32 caracteres.";
+    }
+
+    return "";
+  }
+
+  function mostrarError(campo, mensaje) {
+    campo.classList.add("input-error");
+    let errorDiv = campo.parentElement.querySelector(".field-error");
+    if (!errorDiv) {
+      errorDiv = document.createElement("div");
+      errorDiv.className = "field-error";
+      campo.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = mensaje;
+  }
+
+  function limpiarError(campo) {
+    campo.classList.remove("input-error");
+    const errorDiv = campo.parentElement.querySelector(".field-error");
+    if (errorDiv) errorDiv.textContent = "";
+  }
+
+  function validarCampo(campo) {
+    campo.setCustomValidity("");
+    let mensaje = obtenerMensajeError(campo);
+
+    // Coincidencia de contraseñas
+    if (!mensaje && campo.name === "password2") {
+      const pass1 = form.querySelector('input[name="password"]');
+      if (pass1 && campo.value !== pass1.value) {
+        mensaje = "Las contraseñas no coinciden.";
+      }
+    }
+
+    if (mensaje) {
+      mostrarError(campo, mensaje);
+      return false;
+    } else {
+      limpiarError(campo);
+      return true;
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    let valido = true;
+    let primero = null;
+
+    campos.forEach(campo => {
+      const ok = validarCampo(campo);
+      if (!ok && !primero) {
+        primero = campo;
+        valido = false;
+      }
+    });
+
+    if (!valido) {
+      e.preventDefault();
+      if (primero) primero.focus();
+    }
+  });
+
+  campos.forEach(campo => {
+    campo.addEventListener("input", () => validarCampo(campo));
+  });
+
+  // Ojito mostrar/ocultar
+  document.querySelectorAll(".toggle-password").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
+    });
+  });
+});
+</script>
+
+</body>
+</html>

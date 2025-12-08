@@ -72,18 +72,34 @@
                 <label for="loginPassword">Contraseña</label>
                 <div class="password-wrapper">
                   <input
-                    id="loginPassword"
-                    name="password"
-                    type="password"
-                    class="form-input"
-                    placeholder="••••••••"
-                    required
+                  id="loginPassword"
+                  name="password"
+                  type="password"
+                  class="form-input"
+                  placeholder="••••••••"
+                  required
                   />
                   <span class="toggle-password" data-target="loginPassword">👁</span>
                 </div>
               </div>
             </div>
-
+            
+            <div class="auth-footer">
+              <div class="auth-footer-text">
+                <a href="{% url 'recuperar_clave' %}" class="link-inline">
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
+              <span class="auth-footer-text">
+                ¿Aún no tienes cuenta?
+                <a href="{% url 'registro' %}" class="link-inline">Regístrate aquí</a>
+              </span>
+            
+              <button class="btn-primary" type="submit">
+                Iniciar sesión
+              </button>
+            </div>
+            
             <div class="auth-footer">
               <span class="auth-footer-text">
                 ¿Aún no tienes cuenta?

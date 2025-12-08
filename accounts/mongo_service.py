@@ -1,6 +1,7 @@
 # accounts/mongo_service.py
 from django.conf import settings
 from pymongo import MongoClient, errors
+from pymongo.errors import PyMongoError
 from bson import ObjectId
 import bcrypt
 from datetime import datetime, timezone
@@ -9,15 +10,37 @@ _client = None
 _db = None
 
 def get_db():
-    """
-    Devuelve la instancia de base de datos MongoDB usando
-    la URI y el nombre configurados en settings.py
-    """
     global _client, _db
-    if _db is None:
-        _client = MongoClient(settings.MONGO_URI)
-        _db = _client[settings.MONGO_DB_NAME]
-    return _db
+
+    if _db is not None:
+        return _db
+
+    # 1. Intentar Atlas
+    try:
+        uri = settings.MONGO_URI_ATLAS
+        if uri:
+            client = MongoClient(uri)
+            client.admin.command("ping")
+            print("🔗 Usando MongoDB Atlas")
+            _client = client
+            _db = client[settings.MONGO_DB_NAME]
+            return _db
+    except PyMongoError as e:
+        print("⚠️ No se pudo conectar a Atlas:", e)
+
+    # 2. Fallback a local
+    try:
+        client = MongoClient(settings.MONGO_URI_LOCAL)
+        client.admin.command("ping")
+        print("💻 Usando MongoDB Local")
+        _client = client
+        _db = client[settings.MONGO_DB_NAME]
+        return _db
+    except PyMongoError as e:
+        print("❌ No se pudo conectar ni a Atlas ni a Local:", e)
+        raise
+
+db = get_db()
 
 def get_usuarios_collection():
     db = get_db()
@@ -139,5 +162,40 @@ def marcar_usuario_para_eliminacion(usuario_id: str) -> bool:
                 "fechaSolicitudEliminacion": datetime.now(timezone.utc),
             }
         },
+    )
+    return result.modified_count > 0
+
+def get_mongo():
+    # 1. Intentar Atlas
+    try:
+        client = MongoClient(
+            settings.MONGO_URI_ATLAS,
+            serverSelectionTimeoutMS=3000
+        )
+        client.admin.command("ping")
+        print("🔗 Usando MongoDB Atlas")
+        return client[settings.MONGO_DB_NAME]
+
+    except Exception as e:
+        print("⚠️ Atlas no disponible:", e)
+
+        # 2. Intentar conexión local
+        client = MongoClient(settings.MONGO_URI_LOCAL)
+        print("💻 Usando MongoDB Local")
+        return client[settings.MONGO_DB_NAME]
+
+db = get_mongo()
+
+def actualizar_password_por_correo(correo: str, nueva_password_plana: str) -> bool:
+    """
+    Actualiza la contraseña de un usuario identificado por su correo.
+    Retorna True si se modificó algún documento.
+    """
+    col = get_usuarios_collection()
+    hash_nuevo = hash_password(nueva_password_plana)
+
+    result = col.update_one(
+        {"correoElectronico": correo},
+        {"$set": {"contraseñaHash": hash_nuevo}}
     )
     return result.modified_count > 0
