@@ -13,155 +13,15 @@
   <!-- Reutilizamos login.css para cards / botones -->
   <link rel="stylesheet" href="{% static 'css/login.css' %}">
 
-  <style>
-    .perfil-wrapper {
-      max-width: 900px;
-      margin: 32px auto 48px;
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-      gap: 24px;
-      font-family: Montserrat, sans-serif;
-    }
-    .perfil-card,
-    .perfil-side-card {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 20px 24px;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-    }
-    .perfil-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: #111827;
-    }
-    .perfil-subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 16px;
-    }
-    .perfil-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px 16px;
-    }
-    .perfil-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-    .perfil-input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-      outline: none;
-    }
-    .perfil-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
-    }
-    .perfil-actions {
-      margin-top: 16px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-    .btn-primary-sm {
-      background: #6366f1;
-      color: #ffffff;
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .btn-primary-sm:hover {
-      background: #4f46e5;
-    }
-    .btn-outline-sm {
-      background: transparent;
-      color: #4b5563;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .btn-outline-sm:hover {
-      background: #f3f4f6;
-    }
-    .delete-warning {
-      font-size: 0.85rem;
-      color: #991b1b;
-      margin-top: 10px;
-      line-height: 1.4;
-    }
-    .delete-card-title {
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 8px;
-    }
-    .delete-card-text {
-      font-size: 0.85rem;
-      color: #4b5563;
-      margin-bottom: 12px;
-    }
-    .btn-danger-sm {
-      background: #dc2626;
-      color: #ffffff;
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .btn-danger-sm:hover {
-      background: #b91c1c;
-    }
-
-    .perfil-meta {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-top: 8px;
-    }
-
-    .perfil-field-readonly {
-      background: #f9fafb;
-    }
-
-    /* Mensajes */
-    .auth-messages {
-      max-width: 900px;
-      margin: 16px auto 0;
-    }
-    .auth-message {
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      margin-bottom: 8px;
-    }
-    .auth-message.error {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-    .auth-message.success,
-    .auth-message.info {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-  </style>
 </head>
 <body>
   <div class="app-wrapper">
     <!-- HEADER (puedes usar el mismo que en la landing) -->
     <header class="main-header">
       <div class="brand">
-        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        <a href="{% url 'landing' %}">
+          <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        </a>
       </div>
 
       <div class="header-actions">
@@ -182,128 +42,151 @@
     {% endif %}
 
     <!-- CONTENIDO PERFIL -->
-    <main class="perfil-wrapper">
+      <!-- CONTENIDO PRINCIPAL -->
+  <main>
+    <section class="perfil-section">
+      <div class="perfil-wrapper">
 
-      <!-- CARD IZQUIERDA: DATOS EDITABLES -->
-      <section class="perfil-card">
-        <h1 class="perfil-title">Mi perfil</h1>
-        <p class="perfil-subtitle">
-          Gestiona la información de tu cuenta de cliente.
-        </p>
-
-        <form id="perfilForm" method="post" action="{% url 'perfil' %}">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="update">
-
-          <div class="perfil-grid">
-            <!-- NOMBRES -->
-            <div>
-              <div class="perfil-label">Nombres</div>
-              <input
-                type="text"
-                name="nombres"
-                class="perfil-input"
-                value="{{ usuario.nombres }}"
-                required
-              >
-            </div>
-
-            <!-- APELLIDOS -->
-            <div>
-              <div class="perfil-label">Apellidos</div>
-              <input
-                type="text"
-                name="apellidos"
-                class="perfil-input"
-                value="{{ usuario.apellidos }}"
-                required
-              >
-            </div>
-
-            <!-- CORREO -->
-            <div>
-              <div class="perfil-label">Correo electrónico</div>
-              <input
-                type="email"
-                name="correoElectronico"
-                class="perfil-input"
-                value="{{ usuario.correoElectronico }}"
-                required
-              >
-            </div>
-
-            <!-- TELÉFONO -->
-            <div>
-              <div class="perfil-label">Teléfono</div>
-              <input
-                type="tel"
-                name="telefono"
-                class="perfil-input"
-                value="{{ usuario.telefono }}"
-                required
-              >
-            </div>
-
-            <!-- TIPO IDENTIFICACIÓN -->
-            <div>
-              <div class="perfil-label">Tipo de identificación</div>
-              <select name="tipoIdentificacion" class="perfil-input" required>
-                <option value="CC" {% if usuario.tipoIdentificacion == "CC" %}selected{% endif %}>CC</option>
-                <option value="CE" {% if usuario.tipoIdentificacion == "CE" %}selected{% endif %}>CE</option>
-                <option value="NIT" {% if usuario.tipoIdentificacion == "NIT" %}selected{% endif %}>NIT</option>
-                <option value="PASAPORTE" {% if usuario.tipoIdentificacion == "PASAPORTE" %}selected{% endif %}>PASAPORTE</option>
-                <option value="OTRO" {% if usuario.tipoIdentificacion == "OTRO" %}selected{% endif %}>OTRO</option>
-              </select>
-            </div>
-
-            <!-- NÚMERO IDENTIFICACIÓN -->
-            <div>
-              <div class="perfil-label">Número de identificación</div>
-              <input
-                type="text"
-                name="numeroIdentificacion"
-                class="perfil-input"
-                value="{{ usuario.numeroIdentificacion }}"
-                required
-              >
-            </div>
-          </div>
-
-          <p class="perfil-meta">
-            Estado de la cuenta: <b>{{ usuario.estadoCuenta }}</b><br>
-            Rol: <b>{{ usuario.idRol }}</b>
-          </p>
-
-          <div class="perfil-actions">
-            <button type="submit" class="btn-primary-sm">Guardar cambios</button>
-          </div>
-        </form>
-      </section>
-
-      <!-- CARD DERECHA: ELIMINAR CUENTA -->
-      <aside class="perfil-side-card">
-        <h2 class="delete-card-title">Solicitar eliminación de cuenta</h2>
-        <p class="delete-card-text">
-          Si ya no deseas usar Nexosoft, puedes solicitar la eliminación de tu cuenta.
-          Esto marcará tu cuenta como <b>eliminada</b> y se cerrará tu sesión.
-        </p>
-
-        <form method="post" action="{% url 'perfil' %}" onsubmit="return confirm('¿Estás seguro de que deseas solicitar la eliminación de tu cuenta?');">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete">
-
-          <button type="submit" class="btn-danger-sm">
-            Solicitar eliminación
-          </button>
-        </form>
-
-        <p class="delete-warning">
-          Esta acción desactivará tu cuenta y no podrás iniciar sesión nuevamente
-          con estas credenciales.
-        </p>
+        <!-- SIDEBAR IZQUIERDO -->
+        <aside class="perfil-sidebar">
+          <h2 class="perfil-sidebar-title">Mi cuenta</h2>
+          <nav class="perfil-menu">
+            <a href="{% url 'perfil' %}"
+            class="perfil-menu-item {% if active_section == 'perfil' %}perfil-menu-item--active{% endif %}">
+           Datos personales
+         </a>
+       
+         <a href="{% url 'direcciones' %}"
+            class="perfil-menu-item {% if active_section == 'direcciones' %}perfil-menu-item--active{% endif %}">
+           Direcciones de envío
+         </a>
+       
+         <button type="button" class="perfil-menu-item" disabled>
+           Mis pedidos
+         </button>
+         <button type="button" class="perfil-menu-item" disabled>
+           Seguridad
+         </button>
+       </nav>
       </aside>
+       
+        <!-- COLUMNA DERECHA: CONTENIDO -->
+        <div class="perfil-main">
 
-    </main>
+          <!-- CARD: DATOS PERSONALES (tu formulario actual) -->
+          <section class="perfil-main-card">
+            <h1 class="perfil-title">Mi perfil</h1>
+            <p class="perfil-subtitle">
+              Gestiona la información de tu cuenta de cliente.
+            </p>
+
+            <form method="post" class="perfil-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update">
+
+              <div class="perfil-grid">
+                <div class="perfil-field">
+                  <label for="id_nombres">Nombres</label>
+                  <input
+                    type="text"
+                    id="id_nombres"
+                    name="nombres"
+                    value="{{ usuario.nombres|default_if_none:'' }}"
+                    required
+                  >
+                </div>
+
+                <div class="perfil-field">
+                  <label for="id_apellidos">Apellidos</label>
+                  <input
+                    type="text"
+                    id="id_apellidos"
+                    name="apellidos"
+                    value="{{ usuario.apellidos|default_if_none:'' }}"
+                    required
+                  >
+                </div>
+
+                <div class="perfil-field">
+                  <label for="id_correo">Correo electrónico</label>
+                  <input
+                    type="email"
+                    id="id_correo"
+                    name="correoElectronico"
+                    value="{{ usuario.correoElectronico|default_if_none:'' }}"
+                    required
+                  >
+                </div>
+
+                <div class="perfil-field">
+                  <label for="id_telefono">Teléfono</label>
+                  <input
+                    type="text"
+                    id="id_telefono"
+                    name="telefono"
+                    value="{{ usuario.telefono|default_if_none:'' }}"
+                    required
+                  >
+                </div>
+
+                <div class="perfil-field">
+                  <label for="id_tipo_ident">Tipo de identificación</label>
+                  <select id="id_tipo_ident" name="tipoIdentificacion" required>
+                    <option value="">Selecciona...</option>
+                    <option value="CC" {% if usuario.tipoIdentificacion == "CC" %}selected{% endif %}>Cédula de ciudadanía</option>
+                    <option value="TI" {% if usuario.tipoIdentificacion == "TI" %}selected{% endif %}>Tarjeta de identidad</option>
+                    <option value="CE" {% if usuario.tipoIdentificacion == "CE" %}selected{% endif %}>Cédula de extranjería</option>
+                    <option value="NIT" {% if usuario.tipoIdentificacion == "NIT" %}selected{% endif %}>NIT</option>
+                  </select>
+                </div>
+
+                <div class="perfil-field">
+                  <label for="id_num_ident">Número de identificación</label>
+                  <input
+                    type="text"
+                    id="id_num_ident"
+                    name="numeroIdentificacion"
+                    value="{{ usuario.numeroIdentificacion|default_if_none:'' }}"
+                    required
+                  >
+                </div>
+              </div>
+
+              <div class="perfil-footer">
+                <button type="submit" class="btn-primary">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- CARD: SOLICITAR ELIMINACIÓN -->
+          <aside class="perfil-side-card">
+            <h2 class="perfil-side-title">Solicitar eliminación de cuenta</h2>
+            <p class="perfil-side-text">
+              Si ya no deseas usar Nexosoft, puedes solicitar la eliminación de tu cuenta.
+              Esto marcará tu cuenta como <strong>eliminada</strong> y cerrará tu sesión.
+            </p>
+
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <button type="submit" class="btn-danger">
+                Solicitar eliminación
+              </button>
+            </form>
+
+            <p class="perfil-side-note">
+              Esta acción desactivará tu cuenta y no podrás iniciar sesión de nuevo
+              con estas credenciales.
+            </p>
+          </aside>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
 
     <footer class="site-footer">
       <div class="footer-bottom">

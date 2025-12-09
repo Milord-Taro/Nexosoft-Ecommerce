@@ -1,0 +1,225 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>NEXOSOFT – Direcciones de envío</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+  <div class="app-wrapper">
+
+    <header class="main-header">
+      <div class="brand">
+        <a href="{% url 'landing' %}">
+          <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        </a>
+      </div>
+
+      <div class="header-actions">
+        <a href="{% url 'landing' %}" class="btn-outline">Volver a la tienda</a>
+        <a href="{% url 'logout' %}" class="btn-primary">Cerrar sesión</a>
+      </div>
+    </header>
+
+    {% if messages %}
+      <div class="auth-messages">
+        {% for message in messages %}
+          <div class="auth-message {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <main>
+      <section class="perfil-section">
+        <div class="perfil-wrapper">
+
+          <!-- SIDEBAR -->
+          <aside class="perfil-sidebar">
+            <h2 class="perfil-sidebar-title">Mi cuenta</h2>
+            <nav class="perfil-menu">
+              <a href="{% url 'perfil' %}"
+                 class="perfil-menu-item {% if active_section == 'perfil' %}{% endif %}">
+                Datos personales
+              </a>
+
+              <a href="{% url 'direcciones' %}"
+                 class="perfil-menu-item {% if active_section == 'direcciones' %}perfil-menu-item--active{% endif %}">
+                Direcciones de envío
+              </a>
+
+              <button type="button" class="perfil-menu-item" disabled>
+                Mis pedidos
+              </button>
+              <button type="button" class="perfil-menu-item" disabled>
+                Seguridad
+              </button>
+            </nav>
+          </aside>
+
+          <!-- CONTENIDO PRINCIPAL -->
+          <div class="perfil-main">
+
+            <!-- LISTA DE DIRECCIONES -->
+            <section class="perfil-main-card">
+              <h1 class="perfil-title">Direcciones de envío</h1>
+              <p class="perfil-subtitle">
+                Gestiona las direcciones donde quieres recibir tus pedidos.
+              </p>
+
+              {% if direcciones %}
+                <div class="direcciones-list">
+                  {% for d in direcciones %}
+                    <article class="direccion-item">
+                      <div class="direccion-main">
+                        <div class="direccion-contacto">
+                          <strong>{{ d.nombreContacto }}</strong>
+                          {% if d.esPrincipal %}
+                            <span class="direccion-badge">Principal</span>
+                          {% endif %}
+                        </div>
+                        <div class="direccion-line">
+                          {{ d.ciudad }} – {{ d.barrio }}
+                          {% if d.complemento %}
+                            · {{ d.complemento }}
+                          {% endif %}
+                        </div>
+                        <div class="direccion-line direccion-phone">
+                          Tel: {{ d.telefonoContacto }}
+                        </div>
+                      </div>
+
+                      <div class="direccion-actions">
+                        {% if not d.esPrincipal %}
+                          <form method="post" class="direccion-inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="set_principal">
+                            <input type="hidden" name="direccion_id" value="{{ d.id }}">
+                            <button type="submit" class="btn-outline-sm">
+                              Marcar como principal
+                            </button>
+                          </form>
+                        {% endif %}
+
+                        <form method="post" class="direccion-inline-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="delete">
+                          <input type="hidden" name="direccion_id" value="{{ d.id }}">
+                          <button type="submit" class="btn-danger-sm">
+                            Eliminar
+                          </button>
+                        </form>
+                      </div>
+                    </article>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p style="font-size:0.9rem; color:#6b7280;">
+                  Aún no tienes direcciones guardadas.
+                </p>
+              {% endif %}
+            </section>
+
+            <!-- FORMULARIO: NUEVA DIRECCIÓN -->
+            <section class="perfil-main-card">
+              <h1 class="perfil-title">Direcciones de envío</h1>
+              <p class="perfil-subtitle">
+                Guarda una o varias direcciones para tus pedidos. Podrás elegir la principal al momento de comprar.
+              </p>
+            
+              <!-- FORM: AGREGAR / EDITAR DIRECCIÓN -->
+              <h2 class="perfil-block-title">Agregar nueva dirección</h2>
+            
+              <form method="post" class="perfil-form">
+                {% csrf_token %}
+                <!-- 👇 importante: coincide con la vista -->
+                <input type="hidden" name="action" value="crear">
+            
+                <div class="perfil-grid">
+                  <div class="perfil-field">
+                    <label for="id_nombre_contacto" class="perfil-label">Nombre de quien recibe</label>
+                    <input
+                      type="text"
+                      id="id_nombre_contacto"
+                      name="nombreContacto"
+                      class="perfil-input"
+                      required
+                    >
+                  </div>
+            
+                  <div class="perfil-field">
+                    <label for="id_telefono_contacto" class="perfil-label">Teléfono de quien recibe</label>
+                    <input
+                      type="text"
+                      id="id_telefono_contacto"
+                      name="telefonoContacto"
+                      class="perfil-input"
+                      required
+                    >
+                  </div>
+            
+                  <div class="perfil-field">
+                    <label for="id_ciudad" class="perfil-label">Ciudad</label>
+                    <input
+                      type="text"
+                      id="id_ciudad"
+                      name="ciudad"
+                      class="perfil-input"
+                      required
+                    >
+                  </div>
+            
+                  <div class="perfil-field">
+                    <label for="id_barrio" class="perfil-label">Barrio / Localidad</label>
+                    <input
+                      type="text"
+                      id="id_barrio"
+                      name="barrio"
+                      class="perfil-input"
+                      required
+                    >
+                  </div>
+            
+                  <div class="perfil-field perfil-field-full">
+                    <label for="id_complemento" class="perfil-label">Dirección completa</label>
+                    <input
+                      type="text"
+                      id="id_complemento"
+                      name="complemento"
+                      class="perfil-input"
+                      placeholder="Ej: Calle 10 # 25-36 Apto 302, Torre B"
+                      required
+                    >
+                  </div>
+            
+                  <div class="perfil-field perfil-field-full">
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="esPrincipal">
+                      Usar como dirección principal
+                    </label>
+                  </div>
+                </div>
+            
+                <div class="perfil-footer">
+                  <button type="submit" class="btn-primary">
+                    Guardar dirección
+                  </button>
+                </div>
+              </form>
+            </section>
+
+
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+</body>
+</html>

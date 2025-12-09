@@ -42,6 +42,27 @@ def get_db():
 
 db = get_db()
 
+def get_mongo():
+    # 1. Intentar Atlas
+    try:
+        client = MongoClient(
+            settings.MONGO_URI_ATLAS,
+            serverSelectionTimeoutMS=3000
+        )
+        client.admin.command("ping")
+        print("🔗 Usando MongoDB Atlas")
+        return client[settings.MONGO_DB_NAME]
+
+    except Exception as e:
+        print("⚠️ Atlas no disponible:", e)
+
+        # 2. Intentar conexión local
+        client = MongoClient(settings.MONGO_URI_LOCAL)
+        print("💻 Usando MongoDB Local")
+        return client[settings.MONGO_DB_NAME]
+
+db = get_mongo()
+
 def get_usuarios_collection():
     db = get_db()
     # Ajusta el nombre si tu colección se llama "Usuarios"
@@ -51,6 +72,38 @@ def get_roles_collection():
     db = get_db()
     # Ajusta el nombre si tu colección se llama "Roles"
     return db["Rol"]
+
+def get_direcciones_envio_collection():
+    """
+    Colección para almacenar las direcciones de envío de los usuarios.
+    1 usuario puede tener varias direcciones (idUsuario).
+    """
+    db = get_db()
+    return db["DireccionesEnvio"]
+
+def get_productos_collection():
+    """
+    Devuelve la colección Productos.
+    """
+    db = get_db()
+    return db["Productos"]
+
+def get_carritos_collection():
+    """
+    Devuelve la colección Carritos.
+    """
+    db = get_db()
+    return db["Carritos"]
+
+def get_pedidos_collection():
+    """
+    Devuelve la colección Pedidos.
+    """
+    db = get_db()
+    return db["Pedidos"]
+
+
+
 
 # ─────────────────────────────────────────────
 # ROLES
@@ -165,27 +218,6 @@ def marcar_usuario_para_eliminacion(usuario_id: str) -> bool:
     )
     return result.modified_count > 0
 
-def get_mongo():
-    # 1. Intentar Atlas
-    try:
-        client = MongoClient(
-            settings.MONGO_URI_ATLAS,
-            serverSelectionTimeoutMS=3000
-        )
-        client.admin.command("ping")
-        print("🔗 Usando MongoDB Atlas")
-        return client[settings.MONGO_DB_NAME]
-
-    except Exception as e:
-        print("⚠️ Atlas no disponible:", e)
-
-        # 2. Intentar conexión local
-        client = MongoClient(settings.MONGO_URI_LOCAL)
-        print("💻 Usando MongoDB Local")
-        return client[settings.MONGO_DB_NAME]
-
-db = get_mongo()
-
 def actualizar_password_por_correo(correo: str, nueva_password_plana: str) -> bool:
     """
     Actualiza la contraseña de un usuario identificado por su correo.
@@ -199,27 +231,6 @@ def actualizar_password_por_correo(correo: str, nueva_password_plana: str) -> bo
         {"$set": {"contraseñaHash": hash_nuevo}}
     )
     return result.modified_count > 0
-
-def get_productos_collection():
-    """
-    Devuelve la colección Productos.
-    """
-    db = get_db()
-    return db["Productos"]
-
-def get_carritos_collection():
-    """
-    Devuelve la colección Carritos.
-    """
-    db = get_db()
-    return db["Carritos"]
-
-def get_pedidos_collection():
-    """
-    Devuelve la colección Pedidos.
-    """
-    db = get_db()
-    return db["Pedidos"]
 
 
 def _recalcular_totales_carrito(carrito: dict) -> dict:
@@ -661,4 +672,83 @@ def crear_pedido_desde_carrito(
 
     return pedido_doc
 
+def listar_direcciones_usuario(usuario_id: str):
+    col = get_direcciones_envio_collection()
+    oid = ObjectId(usuario_id)
+    cursor = col.find(
+        {"idUsuario": oid, "activo": True}
+    ).sort("fechaCreacion", 1)
+    return list(cursor)
 
+def crear_direccion_envio(usuario_id: str, data: dict):
+    """
+    data: dict con claves:
+      nombreContacto, telefonoContacto, ciudad, barrio,
+      complemento, esPrincipal (bool)
+    """
+    col = get_direcciones_envio_collection()
+    oid_usuario = ObjectId(usuario_id)
+
+    es_principal = bool(data.get("esPrincipal"))
+
+    # Si la nueva será principal, desmarcamos las anteriores
+    if es_principal:
+        col.update_many(
+            {"idUsuario": oid_usuario, "activo": True},
+            {"$set": {"esPrincipal": False}}
+        )
+
+    doc = {
+        "idUsuario": oid_usuario,
+        "nombreContacto": data.get("nombreContacto", "").strip(),
+        "telefonoContacto": data.get("telefonoContacto", "").strip(),
+        "ciudad": data.get("ciudad", "").strip(),
+        "barrio": data.get("barrio", "").strip(),
+        "complemento": data.get("complemento", "").strip(),
+        "esPrincipal": es_principal,
+        "activo": True,
+        "fechaCreacion": datetime.now(timezone.utc),
+        "fechaActualizacion": datetime.now(timezone.utc),
+    }
+    result = col.insert_one(doc)
+    return result.inserted_id
+
+
+def set_direccion_principal(usuario_id: str, direccion_id: str):
+    col = get_direcciones_envio_collection()
+    oid_usuario = ObjectId(usuario_id)
+    oid_dir = ObjectId(direccion_id)
+
+    # Desmarcar todas
+    col.update_many(
+        {"idUsuario": oid_usuario, "activo": True},
+        {"$set": {"esPrincipal": False}}
+    )
+    # Marcar la seleccionada
+    col.update_one(
+        {"_id": oid_dir, "idUsuario": oid_usuario},
+        {
+            "$set": {
+                "esPrincipal": True,
+                "fechaActualizacion": datetime.now(timezone.utc),
+            }
+        },
+    )
+
+
+def eliminar_direccion_envio(usuario_id: str, direccion_id: str):
+    """Eliminación lógica: activo = False"""
+    col = get_direcciones_envio_collection()
+    oid_usuario = ObjectId(usuario_id)
+    oid_dir = ObjectId(direccion_id)
+
+    col.update_one(
+        {"_id": oid_dir, "idUsuario": oid_usuario},
+        {
+            "$set": {
+                "activo": False,
+                "esPrincipal": False,
+                "fechaActualizacion": datetime.now(timezone.utc),
+            }
+        },
+    )

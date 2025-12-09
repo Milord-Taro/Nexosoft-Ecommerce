@@ -5,7 +5,7 @@
   --red-primary: #D32F2F;
   --red-primary-dark: #B71C1C;
 
-  --bg-main: #37474F;
+  --bg-main: #acbdc5;
   --bg-store: #f3f4f6;
 
   --header-bg: #ffffff;
@@ -460,8 +460,8 @@ main {
 }
 
 .footer-bottom {
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: auto;
+  padding-top: auto;
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
@@ -520,7 +520,6 @@ main {
 /* Columna 2: producto (alineado a la izquierda) */
 .carrito-table th:nth-child(2),
 .carrito-table td:nth-child(2) {
-  width: 30%;
   text-align: left;
 }
 
@@ -812,10 +811,10 @@ main {
 
 /* Celda de stock: número + badge centrados */
 .stock-cell {
-  display: center;
+  display: flex;
   align-items: center;
-  justify-content: center;   /* ANTES: flex-start */
-  gap: 4px;
+  justify-content: center;   /* centra número + icono ⚠ */
+  gap: 6px;
   text-align: center;
 }
 

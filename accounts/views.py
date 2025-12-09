@@ -164,6 +164,92 @@ def perfil_view(request):
     # 4) Si es GET, render normal
     return render(request, "perfil.html", {"usuario": usuario})
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+def direcciones_view(request):
+    # 1) Verificar sesión
+    usuario_id = request.session.get("usuario_id")
+    if not usuario_id:
+        messages.error(request, "Debes iniciar sesión para gestionar tus direcciones.")
+        return redirect("login")
+
+    # 2) Si es POST → crear / actualizar / eliminar dirección
+    if request.method == "POST":
+        action = request.POST.get("action", "").strip()
+
+        # Crear nueva dirección
+        if action == "crear":
+            nombre_contacto = request.POST.get("nombreContacto", "").strip()
+            telefono = request.POST.get("telefonoContacto", "").strip()
+            ciudad = request.POST.get("ciudad", "").strip()
+            barrio = request.POST.get("barrio", "").strip()
+            complemento = request.POST.get("complemento", "").strip()
+            es_principal = request.POST.get("esPrincipal") == "on"
+
+            if not all([nombre_contacto, telefono, ciudad, barrio]):
+                messages.error(request, "Completa al menos nombre, teléfono, ciudad y barrio.")
+                return redirect("direcciones")
+
+            try:
+                mongo_service.crear_direccion_envio(
+                    usuario_id,
+                    {
+                        "nombreContacto": nombre_contacto,
+                        "telefonoContacto": telefono,
+                        "ciudad": ciudad,
+                        "barrio": barrio,
+                        "complemento": complemento,
+                        "esPrincipal": es_principal,
+                    },
+                )
+                messages.success(request, "Dirección guardada correctamente.")
+            except Exception as e:
+                print("ERROR creando dirección:", e)
+                messages.error(request, "No fue posible guardar la dirección.")
+
+        # Eliminar una dirección
+        elif action == "eliminar":
+            direccion_id = request.POST.get("direccion_id", "").strip()
+            try:
+                mongo_service.eliminar_direccion_envio(usuario_id, direccion_id)
+                messages.success(request, "Dirección eliminada.")
+            except Exception as e:
+                print("ERROR eliminando dirección:", e)
+                messages.error(request, "No fue posible eliminar la dirección.")
+
+        # Marcar como principal
+        elif action == "marcar_principal":
+            direccion_id = request.POST.get("direccion_id", "").strip()
+            try:
+                mongo_service.set_direccion_principal(usuario_id, direccion_id)
+                messages.success(request, "Dirección marcada como principal.")
+            except Exception as e:
+                print("ERROR marcando principal:", e)
+                messages.error(request, "No fue posible actualizar la dirección principal.")
+
+        # En cualquier caso de POST, volvemos a la página de direcciones
+        return redirect("direcciones")
+
+    # 3) GET → listar direcciones del usuario
+    try:
+        direcciones = mongo_service.listar_direcciones_usuario(usuario_id)
+    except Exception as e:
+        print("ERROR listando direcciones:", e)
+        messages.error(request, "No fue posible cargar tus direcciones.")
+        direcciones = []
+
+    contexto = {
+        "direcciones": direcciones,
+        "active_section": "direcciones",
+    }
+    return render(request, "direcciones.html", contexto)
+
+
+
+
+
+
 def carrito_detalle(request):
     """
     Muestra el carrito del usuario logueado.
@@ -498,6 +584,7 @@ def register_view(request):
         telefono = request.POST.get("telefono", "").strip()
         password = request.POST.get("password", "")
         password2 = request.POST.get("password2", "")
+        
 
         print("DEBUG REGISTRO →", nombres, apellidos, tipo_ident, num_ident, correo, telefono)
 
