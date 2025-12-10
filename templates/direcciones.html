@@ -99,14 +99,29 @@
                         {% if not d.esPrincipal %}
                           <form method="post" class="direccion-inline-form">
                             {% csrf_token %}
-                            <input type="hidden" name="action" value="set_principal">
+                            <input type="hidden" name="action" value="marcar_principal">
                             <input type="hidden" name="direccion_id" value="{{ d.id }}">
                             <button type="submit" class="btn-outline-sm">
                               Marcar como principal
                             </button>
                           </form>
                         {% endif %}
-
+                                            
+                        <!-- Botón para editar (no envía POST, solo activa el formulario de abajo) -->
+                        <button
+                          type="button"
+                          class="btn-outline-sm direccion-edit-btn"
+                          data-id="{{ d.id }}"
+                          data-nombre="{{ d.nombreContacto }}"
+                          data-telefono="{{ d.telefonoContacto }}"
+                          data-ciudad="{{ d.ciudad }}"
+                          data-barrio="{{ d.barrio }}"
+                          data-complemento="{{ d.complemento|default:'' }}"
+                          data-es-principal="{{ d.esPrincipal|yesno:'1,0' }}"
+                        >
+                          Editar
+                        </button>
+                        
                         <form method="post" class="direccion-inline-form">
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
@@ -116,6 +131,7 @@
                           </button>
                         </form>
                       </div>
+
                     </article>
                   {% endfor %}
                 </div>
@@ -136,10 +152,12 @@
               <!-- FORM: AGREGAR / EDITAR DIRECCIÓN -->
               <h2 class="perfil-block-title">Agregar nueva dirección</h2>
             
-              <form method="post" class="perfil-form">
+              <form method="post" class="perfil-form" id="direccion-form">
                 {% csrf_token %}
                 <!-- 👇 importante: coincide con la vista -->
-                <input type="hidden" name="action" value="crear">
+                <input type="hidden" name="action" value="crear" id="direccion_form_action">
+                <input type="hidden" name="direccion_id" id="direccion_id">
+                
             
                 <div class="perfil-grid">
                   <div class="perfil-field">
@@ -166,25 +184,33 @@
             
                   <div class="perfil-field">
                     <label for="id_ciudad" class="perfil-label">Ciudad</label>
-                    <input
-                      type="text"
+                    <select
                       id="id_ciudad"
                       name="ciudad"
                       class="perfil-input"
                       required
                     >
+                      <option value="">Selecciona una ciudad...</option>
+                      <option value="Bogotá">Bogotá</option>
+                      <option value="Medellín">Medellín</option>
+                      <option value="Cali">Cali</option>
+                      <option value="Barranquilla">Barranquilla</option>
+                      <!-- puedes ir sumando más -->
+                    </select>
                   </div>
-            
+                  
                   <div class="perfil-field">
                     <label for="id_barrio" class="perfil-label">Barrio / Localidad</label>
-                    <input
-                      type="text"
+                    <select
                       id="id_barrio"
                       name="barrio"
                       class="perfil-input"
                       required
                     >
+                      <option value="">Primero selecciona una ciudad</option>
+                    </select>
                   </div>
+                    
             
                   <div class="perfil-field perfil-field-full">
                     <label for="id_complemento" class="perfil-label">Dirección completa</label>
@@ -219,7 +245,9 @@
         </div>
       </section>
     </main>
-
   </div>
+
+  <script src="{% static 'js/direcciones.js' %}"></script>
+
 </body>
 </html>

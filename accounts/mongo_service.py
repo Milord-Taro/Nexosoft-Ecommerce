@@ -674,11 +674,27 @@ def crear_pedido_desde_carrito(
 
 def listar_direcciones_usuario(usuario_id: str):
     col = get_direcciones_envio_collection()
-    oid = ObjectId(usuario_id)
+    try:
+        oid = ObjectId(usuario_id)
+    except Exception:
+        return []
+
     cursor = col.find(
         {"idUsuario": oid, "activo": True}
     ).sort("fechaCreacion", 1)
-    return list(cursor)
+
+    direcciones = []
+    for doc in cursor:
+        direcciones.append({
+            "id": str(doc["_id"]),  # 👈 importante, esto alimenta {{ d.id }} en el template
+            "nombreContacto": doc.get("nombreContacto", ""),
+            "telefonoContacto": doc.get("telefonoContacto", ""),
+            "ciudad": doc.get("ciudad", ""),
+            "barrio": doc.get("barrio", ""),
+            "complemento": doc.get("complemento", ""),
+            "esPrincipal": doc.get("esPrincipal", False),
+        })
+    return direcciones
 
 def crear_direccion_envio(usuario_id: str, data: dict):
     """
@@ -737,11 +753,19 @@ def set_direccion_principal(usuario_id: str, direccion_id: str):
 
 
 def eliminar_direccion_envio(usuario_id: str, direccion_id: str):
-    """Eliminación lógica: activo = False"""
     col = get_direcciones_envio_collection()
     oid_usuario = ObjectId(usuario_id)
     oid_dir = ObjectId(direccion_id)
 
+    # Obtener la dirección antes de eliminar
+    dir_obj = col.find_one({"_id": oid_dir, "idUsuario": oid_usuario})
+
+    if not dir_obj:
+        return False
+
+    era_principal = dir_obj.get("esPrincipal", False)
+
+    # Soft delete
     col.update_one(
         {"_id": oid_dir, "idUsuario": oid_usuario},
         {
@@ -752,3 +776,105 @@ def eliminar_direccion_envio(usuario_id: str, direccion_id: str):
             }
         },
     )
+
+    # Si era principal → seleccionar la primera dirección activa como nueva principal
+    if era_principal:
+        nueva = col.find_one(
+            {"idUsuario": oid_usuario, "activo": True},
+            sort=[("fechaCreacion", 1)]
+        )
+        if nueva:
+            col.update_one(
+                {"_id": nueva["_id"]},
+                {"$set": {"esPrincipal": True}}
+            )
+
+    return True
+
+
+def actualizar_direccion_envio(usuario_id: str, direccion_id: str, data: dict) -> bool:
+    """
+    Actualiza una dirección de envío existente del usuario.
+    data: dict con:
+      nombreContacto, telefonoContacto, ciudad, barrio,
+      complemento, esPrincipal (bool)
+    """
+    col = get_direcciones_envio_collection()
+    oid_usuario = ObjectId(usuario_id)
+    oid_dir = ObjectId(direccion_id)
+
+    es_principal = bool(data.get("esPrincipal"))
+
+    # Si la dirección se va a marcar como principal, desmarcamos las demás
+    if es_principal:
+        col.update_many(
+            {"idUsuario": oid_usuario, "activo": True},
+            {"$set": {"esPrincipal": False}}
+        )
+
+    update_doc = {
+        "nombreContacto": data.get("nombreContacto", "").strip(),
+        "telefonoContacto": data.get("telefonoContacto", "").strip(),
+        "ciudad": data.get("ciudad", "").strip(),
+        "barrio": data.get("barrio", "").strip(),
+        "complemento": data.get("complemento", "").strip(),
+        "esPrincipal": es_principal,
+        "fechaActualizacion": datetime.now(timezone.utc),
+    }
+
+    result = col.update_one(
+        {"_id": oid_dir, "idUsuario": oid_usuario, "activo": True},
+        {"$set": update_doc}
+    )
+
+    return result.modified_count > 0
+
+def marcar_direccion_principal(usuario_id: str, direccion_id: str):
+    col = get_direcciones_envio_collection()
+    oid_usuario = ObjectId(usuario_id)
+    oid_dir = ObjectId(direccion_id)
+
+    # Desmarcar todas las direcciones actuales
+    col.update_many(
+        {"idUsuario": oid_usuario, "activo": True},
+        {"$set": {"esPrincipal": False}}
+    )
+
+    # Marcar la seleccionada
+    result = col.update_one(
+        {"_id": oid_dir, "idUsuario": oid_usuario, "activo": True},
+        {
+            "$set": {
+                "esPrincipal": True,
+                "fechaActualizacion": datetime.now(timezone.utc),
+            }
+        }
+    )
+
+    return result.modified_count > 0
+
+def obtener_direccion_principal(usuario_id: str):
+    """
+    Devuelve el documento real de la dirección principal del usuario
+    (la que está en DireccionesEnvio), o None si no hay.
+    """
+    col = get_direcciones_envio_collection()
+    try:
+        oid_usuario = ObjectId(usuario_id)
+    except Exception:
+        return None
+
+    doc = col.find_one({
+        "idUsuario": oid_usuario,
+        "activo": True,
+        "esPrincipal": True,
+    })
+
+    # Si no hay marcada como principal, opcionalmente podríamos tomar la primera activa
+    if not doc:
+        doc = col.find_one(
+            {"idUsuario": oid_usuario, "activo": True},
+            sort=[("fechaCreacion", 1)]
+        )
+
+    return doc

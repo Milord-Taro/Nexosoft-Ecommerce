@@ -218,6 +218,21 @@
             <input type="hidden" name="metodo_pago" value="efectivo">
             <input type="hidden" name="costo_envio" value="0">
 
+            <div class="checkout-direccion">
+              <label for="direccion_envio"><strong>Dirección de envío:</strong></label>
+              <select name="direccion_id" id="direccion_envio" required>
+                  {% for d in direcciones %}
+                      <option value="{{ d.id }}" {% if d.esPrincipal %}selected{% endif %}>
+                          {{ d.nombreContacto }} — {{ d.ciudad }}, {{ d.barrio }}
+                          {% if d.esPrincipal %}(Principal){% endif %}
+                      </option>
+                  {% endfor %}
+              </select>
+              <a href="{% url 'direcciones' %}" class="btn-outline-sm">
+                  Gestionar direcciones
+              </a>
+          </div>
+              
             <button
               type="submit"
               class="btn btn-primary"

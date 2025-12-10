@@ -174,28 +174,39 @@ def direcciones_view(request):
         messages.error(request, "Debes iniciar sesión para gestionar tus direcciones.")
         return redirect("login")
 
-    # 2) Si es POST → crear / actualizar / eliminar dirección
+    # 2) POST → Crear / Actualizar / Eliminar / Marcar principal
     if request.method == "POST":
         action = request.POST.get("action", "").strip()
 
-        # Crear nueva dirección
+        # Normalizar acciones desde el HTML
+        if action == "delete":
+            action = "eliminar"
+        elif action == "set_principal":
+            action = "marcar_principal"
+
+        # ────────────────────────────────
+        # CREAR NUEVA DIRECCIÓN
+        # ────────────────────────────────
         if action == "crear":
-            nombre_contacto = request.POST.get("nombreContacto", "").strip()
+            nombre = request.POST.get("nombreContacto", "").strip()
             telefono = request.POST.get("telefonoContacto", "").strip()
             ciudad = request.POST.get("ciudad", "").strip()
             barrio = request.POST.get("barrio", "").strip()
             complemento = request.POST.get("complemento", "").strip()
             es_principal = request.POST.get("esPrincipal") == "on"
 
-            if not all([nombre_contacto, telefono, ciudad, barrio]):
-                messages.error(request, "Completa al menos nombre, teléfono, ciudad y barrio.")
+            if not all([nombre, telefono, ciudad, barrio]):
+                messages.error(
+                    request,
+                    "Completa al menos nombre, teléfono, ciudad y barrio."
+                )
                 return redirect("direcciones")
 
             try:
                 mongo_service.crear_direccion_envio(
                     usuario_id,
                     {
-                        "nombreContacto": nombre_contacto,
+                        "nombreContacto": nombre,
                         "telefonoContacto": telefono,
                         "ciudad": ciudad,
                         "barrio": barrio,
@@ -208,9 +219,56 @@ def direcciones_view(request):
                 print("ERROR creando dirección:", e)
                 messages.error(request, "No fue posible guardar la dirección.")
 
-        # Eliminar una dirección
+        # ────────────────────────────────
+        # ACTUALIZAR DIRECCIÓN
+        # ────────────────────────────────
+        elif action == "actualizar":
+            direccion_id = request.POST.get("direccion_id", "").strip()
+            nombre = request.POST.get("nombreContacto", "").strip()
+            telefono = request.POST.get("telefonoContacto", "").strip()
+            ciudad = request.POST.get("ciudad", "").strip()
+            barrio = request.POST.get("barrio", "").strip()
+            complemento = request.POST.get("complemento", "").strip()
+            es_principal = request.POST.get("esPrincipal") == "on"
+
+            if not direccion_id:
+                messages.error(request, "ID de dirección no válido.")
+                return redirect("direcciones")
+
+            if not all([nombre, telefono, ciudad, barrio]):
+                messages.error(request, "Todos los campos obligatorios deben estar completos.")
+                return redirect("direcciones")
+
+            try:
+                ok = mongo_service.actualizar_direccion_envio(
+                    usuario_id,
+                    direccion_id,
+                    {
+                        "nombreContacto": nombre,
+                        "telefonoContacto": telefono,
+                        "ciudad": ciudad,
+                        "barrio": barrio,
+                        "complemento": complemento,
+                        "esPrincipal": es_principal,
+                    },
+                )
+                if ok:
+                    messages.success(request, "Dirección actualizada correctamente.")
+                else:
+                    messages.error(request, "No fue posible actualizar la dirección.")
+            except Exception as e:
+                print("ERROR actualizando dirección:", e)
+                messages.error(request, "No fue posible actualizar la dirección.")
+
+        # ────────────────────────────────
+        # ELIMINAR DIRECCIÓN
+        # ────────────────────────────────
         elif action == "eliminar":
             direccion_id = request.POST.get("direccion_id", "").strip()
+            if not direccion_id:
+                messages.error(request, "ID de dirección no válido.")
+                return redirect("direcciones")
+
             try:
                 mongo_service.eliminar_direccion_envio(usuario_id, direccion_id)
                 messages.success(request, "Dirección eliminada.")
@@ -218,9 +276,15 @@ def direcciones_view(request):
                 print("ERROR eliminando dirección:", e)
                 messages.error(request, "No fue posible eliminar la dirección.")
 
-        # Marcar como principal
+        # ────────────────────────────────
+        # MARCAR COMO PRINCIPAL
+        # ────────────────────────────────
         elif action == "marcar_principal":
             direccion_id = request.POST.get("direccion_id", "").strip()
+            if not direccion_id:
+                messages.error(request, "ID de dirección no válido.")
+                return redirect("direcciones")
+
             try:
                 mongo_service.set_direccion_principal(usuario_id, direccion_id)
                 messages.success(request, "Dirección marcada como principal.")
@@ -228,7 +292,7 @@ def direcciones_view(request):
                 print("ERROR marcando principal:", e)
                 messages.error(request, "No fue posible actualizar la dirección principal.")
 
-        # En cualquier caso de POST, volvemos a la página de direcciones
+        # Siempre volver a la pantalla de direcciones
         return redirect("direcciones")
 
     # 3) GET → listar direcciones del usuario
@@ -244,11 +308,6 @@ def direcciones_view(request):
         "active_section": "direcciones",
     }
     return render(request, "direcciones.html", contexto)
-
-
-
-
-
 
 def carrito_detalle(request):
     """
@@ -324,11 +383,14 @@ def carrito_detalle(request):
         for it in items_ui
     )
 
+    direcciones = mongo_service.listar_direcciones_usuario(usuario_id)
+
     contexto = {
         "carrito": carrito,
         "items": items_ui,
         "hay_precio_cambiado": hay_precio_cambiado,
         "hay_stock_bajo_seleccionado": hay_stock_bajo_seleccionado,
+        "direcciones": direcciones,  # 👈 NUEVO
     }
 
     return render(request, "carrito.html", contexto)
@@ -526,6 +588,22 @@ def carrito_checkout(request):
     if not usuario_id:
         messages.error(request, "Debes iniciar sesión para finalizar tu compra.")
         return redirect("login")
+     
+        # Leer la dirección seleccionada desde el formulario
+    direccion_id = request.POST.get("direccion_id", "").strip()
+    # Si por alguna razón no llega, no seguimos
+    if not direccion_id:
+        messages.error(request, "Debes seleccionar una dirección de envío.")
+        return redirect("carrito")
+    
+    # 🔹 NUEVO: obligar a tener una dirección de envío principal
+    direccion_principal = mongo_service.obtener_direccion_principal(usuario_id)
+    if not direccion_principal:
+        messages.error(
+            request,
+            "Debes registrar una dirección de envío principal antes de finalizar tu compra."
+        )
+        return redirect("direcciones")
 
     # Por ahora tomamos estos valores del formulario o ponemos defaults:
     metodo_entrega = request.POST.get("metodo_entrega", "domicilio")
