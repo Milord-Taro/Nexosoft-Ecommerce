@@ -633,6 +633,28 @@ def crear_pedido_desde_carrito(
     costo_envio = float(costo_envio)
     total_pedido = subtotal_pedido + costo_envio
 
+        # 4.5. Obtener la dirección principal del usuario
+    direcciones_col = get_direcciones_envio_collection()
+    dir_principal = direcciones_col.find_one({
+        "idUsuario": id_usuario,
+        "activo": True,
+        "esPrincipal": True,
+    })
+
+    if not dir_principal:
+        # No dejamos crear pedido si no hay dirección principal
+        raise ValueError("Debes tener al menos una dirección de envío principal para finalizar la compra.")
+
+    # Snapshot de la dirección al momento del pedido
+    direccion_snapshot = {
+        "idDireccionEnvio": dir_principal["_id"],
+        "nombreContacto": dir_principal.get("nombreContacto", ""),
+        "telefonoContacto": dir_principal.get("telefonoContacto", ""),
+        "ciudad": dir_principal.get("ciudad", ""),
+        "barrio": dir_principal.get("barrio", ""),
+        "complemento": dir_principal.get("complemento", ""),
+    }
+
     # 5. Construir documento Pedido (siguiendo tu $jsonSchema)
     ahora = datetime.now(timezone.utc)
 
@@ -645,7 +667,10 @@ def crear_pedido_desde_carrito(
         "costoEnvioPedido": costo_envio,
         "totalPedido": total_pedido,
         "metodoEntrega": metodo_entrega,  # 'domicilio' | 'contraEntrega'
-        "metodoPago": metodo_pago        # 'efectivo', 'tarjetaCredito', etc.
+        "metodoPago": metodo_pago,       # 'efectivo', 'tarjetaCredito', etc.
+        # 👇 NUEVO
+        "idDireccionEnvio": direccion_snapshot["idDireccionEnvio"],
+        "direccionEnvioSnapshot": direccion_snapshot,
     }
 
     # 6. Insertar Pedido
@@ -671,6 +696,135 @@ def crear_pedido_desde_carrito(
     )
 
     return pedido_doc
+
+
+# ─────────────────────────────────────────────
+#  CRUD de PRODUCTOS (uso para admin / catálogo)
+# ─────────────────────────────────────────────
+
+from datetime import datetime, timezone
+from bson import ObjectId
+from pymongo.errors import PyMongoError
+
+def listar_productos(estado: str | None = None) -> list[dict]:
+    """
+    Devuelve una lista de productos.
+    - Si 'estado' es 'activo' o 'inactivo', filtra por ese estado.
+    - Ordena por nombreProducto.
+    """
+    col = get_productos_collection()
+    filtro = {}
+    if estado in ("activo", "inactivo"):
+        filtro["estadoProducto"] = estado
+
+    cursor = col.find(filtro).sort("nombreProducto", 1)
+
+    productos = []
+    for doc in cursor:
+        doc["id"] = str(doc["_id"])  # más cómodo para templates
+        productos.append(doc)
+    return productos
+
+
+def obtener_producto_por_id(id_producto_str: str) -> dict | None:
+    """
+    Devuelve un producto por su _id en string.
+    Retorna None si el id no es válido o no existe.
+    """
+    try:
+        oid = ObjectId(id_producto_str)
+    except Exception:
+        return None
+
+    col = get_productos_collection()
+    doc = col.find_one({"_id": oid})
+    if doc:
+        doc["id"] = str(doc["_id"])
+    return doc
+
+
+def crear_producto(doc_producto: dict) -> str:
+    """
+    Inserta un nuevo producto.
+    Espera que 'doc_producto' ya respete el schema de Mongo.
+    Añade fechaCreacion y fechaActualizacion.
+    Devuelve el id insertado como string.
+    """
+    ahora = datetime.now(timezone.utc)
+    doc_producto["fechaCreacion"] = ahora
+    doc_producto["fechaActualizacion"] = ahora
+
+    col = get_productos_collection()
+    resultado = col.insert_one(doc_producto)
+    return str(resultado.inserted_id)
+
+
+def actualizar_producto(id_producto_str: str, campos_actualizados: dict) -> bool:
+    """
+    Actualiza un producto existente.
+    Solo actualiza los campos pasados en 'campos_actualizados'.
+    Devuelve True si se modificó algún documento.
+    """
+    try:
+        oid = ObjectId(id_producto_str)
+    except Exception:
+        raise ValueError("id_producto_str no es un ObjectId válido")
+
+    if not campos_actualizados:
+        return False
+
+    campos_actualizados["fechaActualizacion"] = datetime.now(timezone.utc)
+
+    col = get_productos_collection()
+    res = col.update_one(
+        {"_id": oid},
+        {"$set": campos_actualizados}
+    )
+    return res.modified_count == 1
+
+
+def cambiar_estado_producto(id_producto_str: str, nuevo_estado: str) -> bool:
+    """
+    Cambia 'estadoProducto' a 'activo' o 'inactivo'.
+    Esto actúa como un 'soft delete' cuando lo ponemos en inactivo.
+    """
+    if nuevo_estado not in ("activo", "inactivo"):
+        raise ValueError("estado inválido, use 'activo' o 'inactivo'.")
+
+    return actualizar_producto(
+        id_producto_str,
+        {"estadoProducto": nuevo_estado}
+    )
+
+
+def eliminar_producto_definitivo(id_producto_str: str) -> bool:
+    """
+    Elimina físicamente un producto de la colección.
+    En la mayoría de casos es mejor usar cambiar_estado_producto()
+    para no romper referencias en carritos/pedidos.
+    """
+    try:
+        oid = ObjectId(id_producto_str)
+    except Exception:
+        raise ValueError("id_producto_str no es un ObjectId válido")
+
+    col = get_productos_collection()
+    res = col.delete_one({"_id": oid})
+    return res.deleted_count == 1
+
+def listar_productos_activos():
+    """
+    Devuelve una lista de productos con estadoProducto = 'activo'.
+    Agrega un campo 'id' como string para usar en los templates.
+    """
+    col = get_productos_collection()
+    cursor = col.find({"estadoProducto": "activo"}).sort("nombreProducto", 1)
+
+    productos = []
+    for doc in cursor:
+        doc["id"] = str(doc["_id"])
+        productos.append(doc)
+    return productos
 
 def listar_direcciones_usuario(usuario_id: str):
     col = get_direcciones_envio_collection()

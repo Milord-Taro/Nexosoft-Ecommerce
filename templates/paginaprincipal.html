@@ -1,4 +1,5 @@
 {% load static %}
+{% load formatos %}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -79,15 +80,6 @@
               </div>
             </div>
 
-            <form action="{% url 'carrito_agregar' %}" method="post" style="margin-top: 1rem;">
-            {% csrf_token %}
-            <input type="hidden" name="producto_id" value="691b79d7ca7794a2b9fd0477">
-            <input type="hidden" name="cantidad" value="1">
-            <button type="submit" class="btn btn-primary">
-              Agregar producto de prueba al carrito
-            </button>
-          </form>
-
             <!-- Categorías -->
             <div class="category-bar" id="categoryBar">
               <button class="category-pill active" data-category="Todos">Todos</button>
@@ -99,7 +91,72 @@
             </div>
     
             <!-- Grid de productos -->
-            <div class="products-grid" id="productsGrid"></div>
+            <div class="products-grid" id="productsGrid">
+              {% for p in productos %}
+                <article class="product-card">
+                  <div class="product-image-wrapper">
+                    <img
+                    src="{% if p.imagenUrl %}{{ p.imagenUrl }}{% else %}{% static 'img/product-placeholder.png' %}{% endif %}"
+                    alt="{{ p.nombreProducto }}"
+                    >
+                  </div>
+            
+                  <div class="product-body">
+                    <div class="product-header">
+                      <h3 class="product-title">{{ p.nombreProducto }}</h3>
+                      <span class="product-tag">
+                        {{ p.marcaProducto }}
+                      </span>
+                    </div>
+            
+                    <div class="product-meta">
+                      {{ p.unidadMedidaProducto|capfirst }}
+                    </div>
+            
+                    <p class="product-desc">
+                      {{ p.descripcionCortaProducto }}
+                    </p>
+            
+                    <div class="product-price">
+                      $ {{ p.inventario.precioVenta|moneda_col }}
+                    </div>
+
+                    </div>
+            
+                  <div class="product-footer">
+                    <!-- Botón real que llama a carrito_agregar -->
+                    <form method="post" action="{% url 'carrito_agregar' %}" class="product-cart-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ p.id }}">
+                    
+                      <div class="product-qty">
+                        <label for="qty-{{ p.id }}">Cantidad</label>
+                        <div class="qty-control" data-qty-wrapper>
+                          <button type="button" class="qty-btn" data-action="minus">−</button>
+                          <input
+                            id="qty-{{ p.id }}"
+                            type="number"
+                            name="cantidad"
+                            value="1"
+                            min="1"
+                            class="qty-input"
+                          >
+                          <button type="button" class="qty-btn" data-action="plus">+</button>
+                        </div>
+                      </div>
+                    
+                      <button type="submit" class="product-btn">
+                        Agregar al carrito
+                      </button>
+                    </form>
+                    </div>
+                </article>
+              {% empty %}
+                <p>No hay productos activos en el catálogo.</p>
+              {% endfor %}
+            </div>
+
+
           </section>
         </main>
     

@@ -5,8 +5,51 @@ from datetime import datetime, timezone
 
 from . import mongo_service
 
+# Categoría genérica por defecto para los productos.
+# Debe ser un ObjectId válido (24 caracteres hex).
+# Por ahora puedes dejar este fijo; más adelante puedes crear
+# una colección Categorias y cambiarlo.
+CATEGORIA_DEFECTO_ID = "677777777777777777777777"
+
+
+def _usuario_tiene_rol(request, roles_permitidos: list[str]) -> bool:
+    """
+    Verifica si el usuario actual tiene alguno de los roles indicados
+    (por nombre: "Vendedor", "Admin", "Cliente", etc.).
+    """
+    id_rol_str = request.session.get("usuario_rol")
+    if not id_rol_str:
+        return False
+
+    try:
+        id_rol = ObjectId(id_rol_str)
+    except Exception:
+        return False
+
+    col_roles = mongo_service.get_roles_collection()
+    rol_doc = col_roles.find_one({"_id": id_rol, "estado": "activo"})
+    if not rol_doc:
+        return False
+
+    return rol_doc.get("nombreDeRol") in roles_permitidos
+
+
 def landing(request):
-    return render(request, 'paginaprincipal.html')
+    """
+    Página principal de la tienda.
+    Ahora carga los productos reales desde MongoDB.
+    """
+    try:
+        productos = mongo_service.listar_productos_activos()
+    except Exception as e:
+        print("ERROR al listar productos activos:", e)
+        productos = []
+
+    contexto = {
+        "productos": productos,
+    }
+    return render(request, "paginaprincipal.html", contexto)
+
 
 def login_view(request):
     if request.method == "POST":
@@ -575,6 +618,280 @@ def pedido_detalle(request, pedido_id: str):
         "pedido_id": pedido_id_str,          # 👈 NUEVO
 }
     return render(request, "pedido_detalle.html", contexto)
+
+# ─────────────────────────────────────────────
+# ADMIN / VENDEDOR – CRUD DE PRODUCTOS
+# ─────────────────────────────────────────────
+
+UNIDADES_MEDIDA_PERMITIDAS = [
+    "unidad", "par", "paquete", "metro", "centimetro",
+    "kilogramo", "gramo", "litro", "mililitro",
+    "caja", "bolsa", "kit", "otro",
+]
+
+
+def admin_productos_list(request):
+    """
+    Listado de productos para Vendedor/Admin.
+    """
+    if not _usuario_tiene_rol(request, ["Vendedor", "Admin"]):
+        messages.error(request, "No tienes permisos para administrar productos.")
+        return redirect("landing")
+
+    try:
+        productos = mongo_service.listar_productos()  # todos
+    except Exception as e:
+        print("ERROR listar_productos:", e)
+        messages.error(request, "Ocurrió un error al cargar los productos.")
+        productos = []
+
+    contexto = {
+        "productos": productos,
+    }
+    return render(request, "admin_productos_list.html", contexto)
+
+
+def admin_producto_nuevo(request):
+    """
+    Crear un producto nuevo.
+    """
+    if not _usuario_tiene_rol(request, ["Vendedor", "Admin"]):
+        messages.error(request, "No tienes permisos para administrar productos.")
+        return redirect("landing")
+
+    if request.method == "POST":
+        nombre = request.POST.get("nombreProducto", "").strip()
+        descripcion = request.POST.get("descripcionCortaProducto", "").strip()
+        marca = request.POST.get("marcaProducto", "").strip()
+        unidad = request.POST.get("unidadMedidaProducto", "").strip()
+        estado = request.POST.get("estadoProducto", "activo").strip()
+        sku = request.POST.get("skuProducto", "").strip()
+        codigo_barras = request.POST.get("codigoBarrasProducto", "").strip()
+        imagen_url = request.POST.get("imagenUrl", "").strip()
+
+        precio_str = request.POST.get("precioVenta", "0").strip()
+        stock_str = request.POST.get("stockActual", "0").strip()
+        stock_min_str = request.POST.get("stockMinimo", "0").strip()
+
+        # Validaciones mínimas (además del schema de Mongo)
+        if len(nombre) < 3:
+            messages.error(request, "El nombre debe tener al menos 3 caracteres.")
+            return redirect("admin_producto_nuevo")
+
+        if len(descripcion) < 10:
+            messages.error(request, "La descripción corta debe tener al menos 10 caracteres.")
+            return redirect("admin_producto_nuevo")
+
+        if unidad not in UNIDADES_MEDIDA_PERMITIDAS:
+            messages.error(request, "Unidad de medida no válida.")
+            return redirect("admin_producto_nuevo")
+
+        if estado not in ("activo", "inactivo"):
+            messages.error(request, "Estado de producto inválido.")
+            return redirect("admin_producto_nuevo")
+
+        try:
+            precio = float(precio_str)
+            stock_actual = int(stock_str)
+            stock_minimo = int(stock_min_str)
+        except ValueError:
+            messages.error(request, "Precio y stock deben ser numéricos.")
+            return redirect("admin_producto_nuevo")
+
+        if precio <= 0:
+            messages.error(request, "El precio debe ser mayor a 0.")
+            return redirect("admin_producto_nuevo")
+
+        if stock_actual < 0 or stock_minimo < 0:
+            messages.error(request, "El stock no puede ser negativo.")
+            return redirect("admin_producto_nuevo")
+
+        # idCategoria genérica por ahora
+        try:
+            id_categoria = ObjectId(CATEGORIA_DEFECTO_ID)
+        except Exception:
+            messages.error(request, "El ID de categoría por defecto no es válido.")
+            return redirect("admin_producto_nuevo")
+
+        doc = {
+            "nombreProducto": nombre,
+            "descripcionCortaProducto": descripcion,
+            "marcaProducto": marca,
+            "unidadMedidaProducto": unidad,
+            "idCategoria": id_categoria,
+            "estadoProducto": estado,
+            "skuProducto": sku,
+            "codigoBarrasProducto": codigo_barras,
+            "imagenUrl": imagen_url,
+            "inventario": {
+                "stockActual": stock_actual,
+                "stockMinimo": stock_minimo,
+                "precioVenta": precio,
+            },
+        }
+
+        try:
+            nuevo_id = mongo_service.crear_producto(doc)
+            messages.success(request, "Producto creado correctamente.")
+            return redirect("admin_productos_list")
+        except errors.DuplicateKeyError:
+            messages.error(request, "Ya existe un producto con ese SKU o nombre.")
+        except Exception as e:
+            print("ERROR crear_producto:", e)
+            messages.error(request, "No se pudo crear el producto. Revisa los datos.")
+
+        return redirect("admin_producto_nuevo")
+
+    # GET → mostrar formulario vacío
+    contexto = {
+        "producto": None,
+        "unidades_medida": UNIDADES_MEDIDA_PERMITIDAS,
+    }
+    return render(request, "admin_producto_form.html", contexto)
+
+
+def admin_producto_editar(request, producto_id: str):
+    """
+    Editar un producto existente.
+    """
+    if not _usuario_tiene_rol(request, ["Vendedor", "Admin"]):
+        messages.error(request, "No tienes permisos para administrar productos.")
+        return redirect("landing")
+
+    producto = mongo_service.obtener_producto_por_id(producto_id)
+    if not producto:
+        messages.error(request, "Producto no encontrado.")
+        return redirect("admin_productos_list")
+
+    if request.method == "POST":
+        nombre = request.POST.get("nombreProducto", "").strip()
+        descripcion = request.POST.get("descripcionCortaProducto", "").strip()
+        marca = request.POST.get("marcaProducto", "").strip()
+        unidad = request.POST.get("unidadMedidaProducto", "").strip()
+        estado = request.POST.get("estadoProducto", "activo").strip()
+        sku = request.POST.get("skuProducto", "").strip()
+        codigo_barras = request.POST.get("codigoBarrasProducto", "").strip()
+        imagen_url = request.POST.get("imagenUrl", "").strip()
+
+        precio_str = request.POST.get("precioVenta", "0").strip()
+        stock_str = request.POST.get("stockActual", "0").strip()
+        stock_min_str = request.POST.get("stockMinimo", "0").strip()
+
+        if len(nombre) < 3:
+            messages.error(request, "El nombre debe tener al menos 3 caracteres.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        if len(descripcion) < 10:
+            messages.error(request, "La descripción corta debe tener al menos 10 caracteres.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        if unidad not in UNIDADES_MEDIDA_PERMITIDAS:
+            messages.error(request, "Unidad de medida no válida.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        if estado not in ("activo", "inactivo"):
+            messages.error(request, "Estado de producto inválido.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        try:
+            precio = float(precio_str)
+            stock_actual = int(stock_str)
+            stock_minimo = int(stock_min_str)
+        except ValueError:
+            messages.error(request, "Precio y stock deben ser numéricos.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        if precio <= 0:
+            messages.error(request, "El precio debe ser mayor a 0.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        if stock_actual < 0 or stock_minimo < 0:
+            messages.error(request, "El stock no puede ser negativo.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+        campos = {
+            "nombreProducto": nombre,
+            "descripcionCortaProducto": descripcion,
+            "marcaProducto": marca,
+            "unidadMedidaProducto": unidad,
+            "estadoProducto": estado,
+            "skuProducto": sku,
+            "codigoBarrasProducto": codigo_barras,
+            "imagenUrl": imagen_url,
+            "inventario.stockActual": stock_actual,
+            "inventario.stockMinimo": stock_minimo,
+            "inventario.precioVenta": precio,
+        }
+
+        try:
+            ok = mongo_service.actualizar_producto(producto_id, campos)
+            if ok:
+                messages.success(request, "Producto actualizado correctamente.")
+            else:
+                messages.info(request, "No se realizaron cambios en el producto.")
+            return redirect("admin_productos_list")
+        except Exception as e:
+            print("ERROR actualizar_producto:", e)
+            messages.error(request, "No se pudo actualizar el producto. Revisa los datos.")
+            return redirect("admin_producto_editar", producto_id=producto_id)
+
+    # GET → mostrar formulario con datos actuales
+    contexto = {
+        "producto": producto,
+        "unidades_medida": UNIDADES_MEDIDA_PERMITIDAS,
+    }
+    return render(request, "admin_producto_form.html", contexto)
+
+
+def admin_producto_cambiar_estado(request, producto_id: str):
+    """
+    Cambia estadoProducto a activo/inactivo (soft delete).
+    """
+    if request.method != "POST":
+        return redirect("admin_productos_list")
+
+    if not _usuario_tiene_rol(request, ["Vendedor", "Admin"]):
+        messages.error(request, "No tienes permisos para administrar productos.")
+        return redirect("landing")
+
+    nuevo_estado = request.POST.get("estado", "inactivo")
+    if nuevo_estado not in ("activo", "inactivo"):
+        messages.error(request, "Estado inválido.")
+        return redirect("admin_productos_list")
+
+    try:
+        mongo_service.cambiar_estado_producto(producto_id, nuevo_estado)
+        messages.success(request, "Estado del producto actualizado.")
+    except Exception as e:
+        print("ERROR cambiar_estado_producto:", e)
+        messages.error(request, "No se pudo cambiar el estado del producto.")
+
+    return redirect("admin_productos_list")
+
+
+def admin_producto_eliminar(request, producto_id: str):
+    """
+    Elimina físicamente un producto (no recomendado para producción).
+    Mejor usar cambiar_estado_producto("inactivo") para 'soft delete'.
+    """
+    if request.method != "POST":
+        return redirect("admin_productos_list")
+
+    if not _usuario_tiene_rol(request, ["Vendedor", "Admin"]):
+        messages.error(request, "No tienes permisos para administrar productos.")
+        return redirect("landing")
+
+    try:
+        ok = mongo_service.eliminar_producto_definitivo(producto_id)
+        if ok:
+            messages.success(request, "Producto eliminado definitivamente.")
+        else:
+            messages.error(request, "No se encontró el producto a eliminar.")
+    except Exception as e:
+        print("ERROR eliminar_producto_definitivo:", e)
+        messages.error(request, "No se pudo eliminar el producto.")
+
+    return redirect("admin_productos_list")
 
 def carrito_checkout(request):
     """

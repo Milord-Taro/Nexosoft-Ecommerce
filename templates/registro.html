@@ -10,8 +10,9 @@
   <!-- Fuente Montserrat -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Usamos el mismo CSS que el login -->
-  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <!-- Estilos globales de la tienda -->
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
 </head>
 
 <body>
@@ -20,7 +21,9 @@
     <!-- HEADER -->
     <header class="main-header">
       <div class="brand">
-        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        <a href="{% url 'landing' %}">
+          <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        </a>
       </div>
 
       <div class="header-actions">
@@ -29,7 +32,7 @@
       </div>
     </header>
 
-    <main>
+    <main class="page-section page-section--narrow">
       <!-- BANNER DE MENSAJES -->
       {% if messages %}
       <div class="auth-messages">
@@ -216,15 +219,54 @@
       </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="footer-bottom">
-        <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
-        <span class="footer-made-with">
-          Hecho con <span class="footer-heart">❤</span> para nuestros clientes
-        </span>
+    <!-- ==========================================================
+             FOOTER
+        ========================================================== -->
+        <footer class="site-footer">
+          <div class="footer-top">
+            <div class="footer-brand">
+              <div class="footer-brand-logo">
+                <div class="footer-logo-icon">N</div>
+                <span class="footer-brand-name">NEXOSOFT</span>
+              </div>
+              <p class="footer-brand-text">
+                Tu tienda en línea de herramientas y productos de ferretería de confianza.
+              </p>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Enlaces Rápidos</h4>
+              <ul>
+                <li>Sobre Nosotros</li>
+                <li>Términos y Condiciones</li>
+                <li>Política de Privacidad</li>
+                <li>Preguntas Frecuentes</li>
+                <li>PQR - Peticiones, Quejas y Reclamos</li>
+                <!-- 👇 DEMOS DE ERRORES -->
+                <li><a href="{% url 'demo_404' %}">Error 404</a></li>
+                <li><a href="{% url 'demo_500' %}">Error 500</a></li>
+              </ul>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Contacto</h4>
+              <ul>
+                <li>Email: info@nexosoft.com</li>
+                <li>Teléfono: +57 3000000001</li>
+                <li>Dirección: Sena</li>
+                <li>Bogotá, Colombia</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="footer-bottom">
+            <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+            <span class="footer-made-with">
+              Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+            </span>
+          </div>
+        </footer>
       </div>
-    </footer>
-  </div>
 
   <!-- // Validación de coincidencia de contraseñas en tiempo real -->
 

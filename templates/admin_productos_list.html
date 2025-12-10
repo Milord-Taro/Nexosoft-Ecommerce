@@ -1,0 +1,122 @@
+{% load static %}
+{% load formatos %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrar productos – Nexosoft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+<div class="app-wrapper">
+
+  {% comment %}
+    Si quieres, copia aquí el mismo header que usas en perfil.html
+  {% endcomment %}
+  <header class="main-header">
+    <div class="brand">
+      <a href="{% url 'landing' %}">
+        <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+      </a>
+    </div>
+    <div class="header-actions">
+      <a href="{% url 'landing' %}" class="btn-outline">Ir a la tienda</a>
+      <a href="{% url 'logout' %}" class="btn-secondary">Cerrar sesión</a>
+    </div>
+  </header>
+
+  <main class="perfil-layout">
+    <section class="perfil-main">
+
+      <div class="perfil-main-card">
+        <div class="perfil-header-row">
+          <div>
+            <h1 class="perfil-title">Administrar productos</h1>
+            <p class="perfil-subtitle">
+              Aquí puedes crear, editar y activar/desactivar productos del catálogo.
+            </p>
+          </div>
+          <div>
+            <a href="{% url 'admin_producto_nuevo' %}" class="btn-primary">
+              + Nuevo producto
+            </a>
+          </div>
+        </div>
+
+        <table class="table-basic">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Marca</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Estado</th>
+              <th style="width: 180px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for p in productos %}
+            <tr>
+              <td>{{ p.nombreProducto }}</td>
+              <td>{{ p.marcaProducto }}</td>
+              <td>$ {{ p.inventario.precioVenta }}</td>
+              <td>{{ p.inventario.stockActual }}</td>
+              <td>
+                {% if p.estadoProducto == "activo" %}
+                  <span class="badge badge-success">Activo</span>
+                {% else %}
+                  <span class="badge badge-muted">Inactivo</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'admin_producto_editar' p.id %}" class="btn-sm btn-outline">
+                  Editar
+                </a>
+
+                <form action="{% url 'admin_producto_cambiar_estado' p.id %}"
+                      method="post"
+                      style="display:inline-block;">
+                  {% csrf_token %}
+                  {% if p.estadoProducto == "activo" %}
+                    <input type="hidden" name="estado" value="inactivo">
+                    <button type="submit" class="btn-sm btn-secondary">
+                      Desactivar
+                    </button>
+                  {% else %}
+                    <input type="hidden" name="estado" value="activo">
+                    <button type="submit" class="btn-sm btn-primary">
+                      Activar
+                    </button>
+                  {% endif %}
+                </form>
+
+                <form action="{% url 'admin_producto_eliminar' p.id %}"
+                      method="post"
+                      style="display:inline-block;"
+                      onsubmit="return confirm('¿Eliminar este producto definitivamente?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-sm btn-danger">
+                    Eliminar
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6">No hay productos registrados.</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  </main>
+
+</div>
+</body>
+</html>

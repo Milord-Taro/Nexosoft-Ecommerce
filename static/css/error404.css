@@ -41,7 +41,6 @@ body {
   background: var(--header-bg);
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-soft);
   margin-bottom: 20px;
 }
 
@@ -77,8 +76,7 @@ body {
   background: var(--red-primary);
   border-color: var(--red-primary);
   color: #ffffff;
-  box-shadow: 0 10px 20px rgba(211, 47, 47, 0.35);
-}
+ }
 
 .btn-primary:hover {
   background: var(--red-primary-dark);
@@ -103,7 +101,6 @@ body {
   background: #ffffff;
   border-radius: 18px;
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
@@ -191,7 +188,6 @@ body {
 .card-right-clean {
   background: transparent;
   border: none;
-  box-shadow: none;
   padding: 0;
   display: flex;
   align-items: center;

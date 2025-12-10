@@ -1,6 +1,7 @@
 // ============================================================
 // 1. PRODUCTOS EN LA TIENDA (BASE DE DATOS PROVISORIA)
 // ============================================================
+/*
 const productos = [
   {
     id: 1,
@@ -182,7 +183,7 @@ const productos = [
     ],
     stock: "En stock"
   }
-];
+];*/
 
 // ============================================================
 // 2. CARRITO (CONTADOR BÁSICO)
@@ -200,6 +201,7 @@ function addToCart() {
 // ============================================================
 const productsGrid = document.getElementById("productsGrid");
 
+/*
 function renderProducts(categoria = "Todos") {
   if (!productsGrid) return;
 
@@ -245,6 +247,7 @@ function renderProducts(categoria = "Todos") {
 }
 
 renderProducts();
+*/
 
 // ============================================================
 // 4. FILTRO DE CATEGORÍAS
@@ -337,4 +340,27 @@ productsGrid.addEventListener("click", (e) => {
   if (btnAdd) {
     addToCart();
   }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const qtyWrappers = document.querySelectorAll("[data-qty-wrapper]");
+
+  qtyWrappers.forEach(wrapper => {
+    const input = wrapper.querySelector(".qty-input");
+
+    wrapper.addEventListener("click", function (event) {
+      if (!event.target.matches(".qty-btn")) return;
+
+      const action = event.target.dataset.action;
+      let current = parseInt(input.value || "1", 10);
+
+      if (action === "plus") {
+        current += 1;
+      } else if (action === "minus") {
+        current = Math.max(1, current - 1);
+      }
+
+      input.value = current;
+    });
+  });
 });

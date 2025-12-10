@@ -77,7 +77,6 @@ body {
   background: var(--red-primary);
   border-color: var(--red-primary);
   color: #ffffff;
-  box-shadow: 0 10px 20px rgba(211, 47, 47, 0.35);
 }
 
 .btn-primary:hover {

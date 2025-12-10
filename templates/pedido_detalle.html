@@ -1,4 +1,5 @@
 {% load static %}
+{% load formatos %}
 
 <!DOCTYPE html>
 <html lang="es">
@@ -16,9 +17,11 @@
 
   <!-- HEADER (mismo que landing/carrito) -->
   <header class="main-header">
-    <div class="brand">
-      <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
-    </div>
+      <div class="brand">
+        <a href="{% url 'landing' %}">
+          <img src="{% static 'img/logo.png' %}" alt="NEXOSOFT Logo">
+        </a>
+      </div>
 
     <div class="header-search">
       <input type="text" placeholder="Buscar productos...">
@@ -76,6 +79,7 @@
                   <span class="pedido-meta-label">ID del pedido:</span>
                   <span class="pedido-meta-value monospace">{{ pedido_id }}</span>
                 </div>
+                
                 <div class="pedido-meta-row">
                     <span class="pedido-meta-label">Fecha:</span>
                     <span class="pedido-meta-value">
@@ -99,10 +103,46 @@
                     <span class="pedido-meta-value">{{ pedido.metodoPago }}</span>
                   </div>
                 </div>
-                  
-                
+
+                {% if pedido.direccionEnvioSnapshot %}
+                <div class="pedido-meta-row">
+                  <span class="pedido-meta-label">Destinatario:</span>
+                  <span class="pedido-meta-value">
+                    {{ pedido.direccionEnvioSnapshot.nombreContacto }}
+                    – {{ pedido.direccionEnvioSnapshot.telefonoContacto }}
+                  </span>
+                </div>
+              
+                <div class="pedido-meta-row">
+                  <span class="pedido-meta-label">Dirección de envío:</span>
+                  <span class="pedido-meta-value">
+                    {{ pedido.direccionEnvioSnapshot.ciudad }} – {{ pedido.direccionEnvioSnapshot.barrio }}
+                    {% if pedido.direccionEnvioSnapshot.complemento %}
+                      · {{ pedido.direccionEnvioSnapshot.complemento }}
+                    {% endif %}
+                  </span>
+                </div>
+              {% endif %}
+
+              {% if pedido.destinatarioNombre or pedido.destinatarioTelefono or pedido.direccionTexto %}
+              <div class="pedido-meta-row">
+                <span class="pedido-meta-label">Destinatario:</span>
+                <span class="pedido-meta-value">
+                  {{ pedido.destinatarioNombre }}{% if pedido.destinatarioTelefono %} – {{ pedido.destinatarioTelefono }}{% endif %}
+                </span>
+              </div>
+    
+              <div class="pedido-meta-row">
+                <span class="pedido-meta-label">Dirección de envío:</span>
+                <span class="pedido-meta-value">
+                  {{ pedido.direccionTexto }}
+                </span>
+              </div>
+              {% endif %}
+
+                      
                 {% if items %}
-                <table class="carrito-table">
+                <table class="carrito-table pedido-items-table">
                     <thead>
                     <tr>
                       <th>Producto</th>
@@ -161,7 +201,55 @@
                 </div>
             </section>
         </main>
-        
+         <!-- ==========================================================
+             FOOTER
+        ========================================================== -->
+        <footer class="site-footer">
+          <div class="footer-top">
+            <div class="footer-brand">
+              <div class="footer-brand-logo">
+                <div class="footer-logo-icon">N</div>
+                <span class="footer-brand-name">NEXOSOFT</span>
+              </div>
+              <p class="footer-brand-text">
+                Tu tienda en línea de herramientas y productos de ferretería de confianza.
+              </p>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Enlaces Rápidos</h4>
+              <ul>
+                <li>Sobre Nosotros</li>
+                <li>Términos y Condiciones</li>
+                <li>Política de Privacidad</li>
+                <li>Preguntas Frecuentes</li>
+                <li>PQR - Peticiones, Quejas y Reclamos</li>
+                <!-- 👇 DEMOS DE ERRORES -->
+                <li><a href="{% url 'demo_404' %}">Error 404</a></li>
+                <li><a href="{% url 'demo_500' %}">Error 500</a></li>
+              </ul>
+            </div>
+    
+            <div class="footer-column">
+              <h4>Contacto</h4>
+              <ul>
+                <li>Email: info@nexosoft.com</li>
+                <li>Teléfono: +57 3000000001</li>
+                <li>Dirección: Sena</li>
+                <li>Bogotá, Colombia</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="footer-bottom">
+            <span>© 2025 NEXOSOFT. Todos los derechos reservados.</span>
+            <span class="footer-made-with">
+              Hecho con <span class="footer-heart">❤</span> para nuestros clientes
+            </span>
+          </div>
+        </footer>
+      </div>
+
     </div>
 </body>
 </html>

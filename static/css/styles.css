@@ -44,9 +44,8 @@ body {
 
 main {
   flex: 1;
-  padding-top: 100zpx;
+  padding-top: 24px;
 }
-
 /* ============================================================
    HEADER
    ============================================================ */
@@ -121,8 +120,7 @@ main {
   background: var(--red-primary);
   border: 1px solid var(--red-primary);
   color: #fff;
-  box-shadow: 0 10px 20px rgba(211, 47, 47, 0.35);
-}
+ }
 
 .btn-primary:hover {
   background: var(--red-primary-dark);
@@ -159,6 +157,21 @@ main {
   font-weight: 600;
 }
 
+/* Sección estándar para páginas internas (perfil, carrito, direcciones, etc.) */
+.page-section {
+  background: var(--bg-store);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 24px 20px;
+  min-height: calc(100vh - 220px); /* empuja el footer hacia abajo */
+}
+
+/* Versión más compacta (para login / recuperar, etc.) */
+.page-section--narrow {
+  max-width: 1120px;
+  margin: 18px auto 24px;
+}
+
 /* ============================================================
    TIENDA
    ============================================================ */
@@ -167,6 +180,7 @@ main {
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-soft);
   padding: 18px 190px 20px;
+  min-height: calc(100vh - 220px); /* empuja el footer hacia abajo en todas las páginas */
 }
 
 .store-title {
@@ -424,7 +438,7 @@ main {
    FOOTER
    ============================================================ */
 .site-footer {
-  margin-top: 24px;
+  margin-top: 12px;
   padding: 16px 45px;
   border-top: 1px solid var(--border-color);
   font-size: 0.8rem;
@@ -902,4 +916,766 @@ main {
   .modal-image-wrapper {
     height: 200px;
   }
+}
+
+/* ========================================================
+   Tabla de ítems en DETALLE DE PEDIDO
+   (reescribe algunos estilos de carrito-table)
+   ======================================================== */
+.pedido-items-table {
+  table-layout: auto; /* no fija columnas como el carrito */
+}
+
+/* Encabezados y celdas más amigables */
+.pedido-items-table th,
+.pedido-items-table td {
+  text-align: left; /* por defecto izquierda */
+}
+
+/* Columna 1: Producto (ancha) */
+.pedido-items-table th:nth-child(1),
+.pedido-items-table td:nth-child(1) {
+  width: 55%;
+}
+
+/* Columna 2: Cantidad (centrada y más angosta) */
+.pedido-items-table th:nth-child(2),
+.pedido-items-table td:nth-child(2) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Columnas 3 y 4: Precios, alineados a la derecha */
+.pedido-items-table th:nth-child(3),
+.pedido-items-table td:nth-child(3),
+.pedido-items-table th:nth-child(4),
+.pedido-items-table td:nth-child(4) {
+  width: 15%;
+  text-align: right;
+}
+
+/* ============================================================
+   PÁGINAS DE ERROR 404 / 500
+   ============================================================ */
+.error-page {
+  margin-top: 24px;
+  margin-bottom: 32px;
+}
+
+.error-layout {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr);
+  gap: 32px;
+  align-items: stretch;
+}
+
+.error-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.error-card-header {
+  background: var(--red-primary);
+  color: #fff;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.error-card-header small {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.error-card-body {
+  padding: 20px 22px;
+  font-size: 0.92rem;
+  color: var(--text-soft);
+}
+
+.error-card-body h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.error-card-body p {
+  margin-bottom: 0.7rem;
+}
+
+.error-card-actions {
+  padding: 16px 22px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.error-card-actions .btn-outline,
+.error-card-actions .btn-primary {
+  min-width: 140px;
+  text-align: center;
+}
+
+/* Columna derecha con la ilustración */
+.error-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-hero img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .error-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .error-card-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================================
+   PERFIL / MI CUENTA (SIDEBAR)
+   ============================================================ */
+
+.perfil-section {
+  margin-top: 24px;
+  margin-bottom: 32px;
+}
+
+.perfil-wrapper {
+  max-width: 1120px;
+  margin: 32px auto 48px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr); /* sidebar + contenido */
+  gap: 24px;
+  align-items: flex-start;
+  font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+/* Sidebar */
+.perfil-sidebar {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 20px;
+}
+
+.perfil-sidebar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.perfil-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.perfil-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.perfil-menu-item:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.perfil-menu-item--active {
+  background: var(--red-primary);
+  border-color: var(--red-primary);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(211, 47, 47, 0.35);
+}
+
+.perfil-menu-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Columna derecha */
+.perfil-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.perfil-main-card,
+.perfil-side-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 22px;
+}
+
+.perfil-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.perfil-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  margin-bottom: 16px;
+}
+
+/* Grid de campos */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.perfil-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.perfil-field input,
+.perfil-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.perfil-field input:focus,
+.perfil-field select:focus {
+  border-color: var(--red-primary);
+}
+
+/* Footer del formulario */
+.perfil-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Card lateral eliminación */
+.perfil-side-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.perfil-side-text {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+.perfil-side-note {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #991b1b;
+}
+
+/* Botón peligro */
+.btn-danger {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Mensajes reutilizados en perfil */
+.auth-messages {
+  max-width: 1120px;
+  margin: 16px auto 0;
+}
+
+.auth-message {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .perfil-wrapper {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perfil-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.perfil-card,
+.perfil-side-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px 24px;
+
+}
+
+.perfil-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.perfil-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.perfil-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  outline: none;
+}
+.perfil-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+.perfil-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.btn-primary-sm {
+  background: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-primary-sm:hover {
+  background: #4f46e5;
+}
+.btn-outline-sm {
+  background: transparent;
+  color: #4b5563;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-outline-sm:hover {
+  background: #f3f4f6;
+}
+.delete-warning {
+  font-size: 0.85rem;
+  color: #991b1b;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+.delete-card-title {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+.delete-card-text {
+  font-size: 0.85rem;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+.btn-danger-sm {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-danger-sm:hover {
+  background: #b91c1c;
+}
+
+.perfil-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+.perfil-field-readonly {
+  background: #f9fafb;
+}
+
+/* Mensajes */
+.auth-messages {
+  max-width: 900px;
+  margin: 16px auto 0;
+}
+.auth-message {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.auth-message.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.auth-message.success,
+.auth-message.info {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.perfil-block-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 12px 0;
+  color: #111827;
+}
+
+.perfil-field-full {
+  grid-column: 1 / -1; /* la fila ocupa las 2 columnas del grid */
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+/* ============================================================
+   LISTA DE DIRECCIONES
+   ============================================================ */
+
+.direcciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.direccion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: #f9fafb;
+}
+
+.direccion-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.direccion-contacto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.direccion-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 600;
+}
+
+.direccion-line {
+  color: var(--text-soft);
+}
+
+.direccion-phone {
+  font-size: 0.8rem;
+}
+
+.direccion-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.direccion-inline-form {
+  margin: 0;
+}
+
+/* OLD LOGIN*/
+
+/* ===============================
+   RESPONSIVE
+   =============================== */
+@media (max-width: 900px) {
+  body {
+    padding: 16px;
+  }
+
+  .main-header {
+    align-items: flex-start;
+  }
+}
+
+/* BANNER DE MENSAJES (login / registro) */
+.auth-messages {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* centra el bloque */
+  margin-bottom: 12px;
+}
+
+.auth-message {
+  width: 100%;
+  max-width: 460px;         /* mismo ancho aproximado que la tarjeta */
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-top: 8px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+/* colores según tipo de mensaje */
+.auth-message.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.auth-message.success,
+.auth-message.info {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  opacity: 0.7;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+/* Medidor de fuerza de contraseña */
+.password-strength {
+  margin-top: 6px;
+}
+
+.password-strength-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  position: relative;
+}
+
+.password-strength-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: 999px;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.password-strength-text {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Colores según nivel (los controlamos vía JS con data-level) */
+.password-strength-bar[data-level="1"]::after {
+  width: 25%;
+  background-color: #ef4444; /* rojo */
+}
+
+.password-strength-bar[data-level="2"]::after {
+  width: 50%;
+  background-color: #f97316; /* naranja */
+}
+
+.password-strength-bar[data-level="3"]::after {
+  width: 75%;
+  background-color: #eab308; /* amarillo */
+}
+
+.password-strength-bar[data-level="4"]::after {
+  width: 100%;
+  background-color: #22c55e; /* verde */
+}
+
+/* Mensaje de error debajo del campo */
+.field-error {
+  color: #e53935;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* Borde rojo en inputs con error */
+.input-error {
+  border: 1px solid #e53935 !important;
+}
+
+/* ===============================
+   LOGIN CARD
+   =============================== */
+
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.auth-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-color);
+  background: #f9fafb;
+}
+
+.auth-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  margin-top: 4px;
+}
+
+.auth-body {
+  padding: 18px 22px 20px;
+  font-size: 0.9rem;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 0.82rem;
+  color: var(--text-main);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--red-primary);
+}
+
+/* FOOTER DE LA CARD LOGIN/REGISTRO*/
+.auth-footer {
+  padding: 12px 22px 16px;
+  border-top: 1px solid var(--border-color);
+  background: #f9fafb;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-footer-text {
+  font-size: 0.8rem;
+}
+
+.link-inline {
+  color: var(--red-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-inline:hover {
+  text-decoration: underline;
 }
